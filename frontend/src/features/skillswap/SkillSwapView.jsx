@@ -1,0 +1,204 @@
+// src/features/skillswap/SkillSwapView.jsx
+import React, { useState } from 'react';
+import PeerCard from './PeerCard';
+import RequestCard from './RequestCard';
+import PostSwapModal from './PostSwapModal';
+import {
+  IconPlus, IconArrowsSwap, IconGlobe,
+  IconSearch, IconBell, IconUser,
+} from '../../components/ui/Icons';
+
+export default function SkillSwapView({
+  skillSwap,
+  onRequestSwap,
+  onAccept,
+  onIgnore,
+  onPostSwap,
+  searchQuery,
+}) {
+  const [showPostModal, setShowPostModal] = useState(false);
+
+  const filteredMatches = skillSwap.matches.filter(m => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return m.name.toLowerCase().includes(q) ||
+           m.give.toLowerCase().includes(q) ||
+           m.take.toLowerCase().includes(q);
+  });
+
+  const pendingRequests = skillSwap.requests.filter(r => r.status === 'pending').length;
+  const myPostings = skillSwap.myPostings || [];
+
+  return (
+    <div className="animate-fadeIn">
+
+      {/* ── Header ── */}
+      <div className="flex items-start justify-between mb-6">
+        <div>
+          <h3 className="font-display font-bold text-2xl text-textPrimary tracking-tight">
+            SkillSwap Peer Network
+          </h3>
+          <p className="text-sm text-textMuted mt-1">
+            Trade knowledge with peers — teach what you know, learn what you need.
+          </p>
+        </div>
+        {/* CTA */}
+        <button
+          onClick={() => setShowPostModal(true)}
+          className="btn-primary flex-shrink-0 gap-1.5"
+          style={{ height: '38px', padding: '0 16px', borderRadius: '8px' }}
+        >
+          <IconPlus size={14} />
+          <span>Post a Swap</span>
+        </button>
+      </div>
+
+      {/* ── How it works ── */}
+      <div className="card p-4 mb-6 bg-accentIndigo/4 border-accentIndigo/20">
+        <div className="flex items-start gap-3">
+          <div className="w-8 h-8 rounded-full bg-accentIndigo/10 flex items-center justify-center flex-shrink-0 text-accentIndigo">
+            <IconArrowsSwap size={15} />
+          </div>
+          <div>
+            <p className="text-xs font-display font-semibold text-textPrimary mb-1">How SkillSwap Works</p>
+            <p className="text-[11px] text-textMuted leading-relaxed">
+              Each peer offers a skill they can teach and one they want to learn.
+              When you match, you both commit to 30-minute sessions. No coins required — just knowledge!
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── My Postings ── */}
+      {myPostings.length > 0 && (
+        <div className="mb-7">
+          <div className="flex items-center gap-2 mb-3">
+            <IconUser size={15} className="text-accentViolet" />
+            <h4 className="font-display font-semibold text-sm text-textPrimary">
+              My Posted Swaps
+              <span className="text-[10px] font-normal text-textMuted ml-1.5">({myPostings.length})</span>
+            </h4>
+          </div>
+          <div className="flex flex-col gap-3">
+            {myPostings.map(post => (
+              <div
+                key={post.id}
+                className="card p-4 border-accentViolet/20 bg-accentViolet/4 flex items-start gap-4"
+              >
+                {/* Skill pair */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full
+                                     bg-accentEmerald/12 text-accentEmerald border border-accentEmerald/20">
+                      Teach: {post.teach}
+                    </span>
+                    <span className="text-textFaint text-xs">to</span>
+                    <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full
+                                     bg-accentIndigo/12 text-accentIndigo border border-accentIndigo/20">
+                      Learn: {post.learn}
+                    </span>
+                    <span className="ml-auto text-[10px] text-textMuted font-display font-semibold
+                                     flex items-center gap-1">
+                      <span className="live-dot w-1.5 h-1.5" /> Active
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-textMuted leading-relaxed">{post.msg}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ── Main grid ── */}
+      <div className="grid grid-cols-3 gap-6">
+
+        {/* Left: Peer Matches */}
+        <div className="col-span-2">
+          <div className="flex items-center gap-2 mb-3">
+            <IconSearch size={15} className="text-textSecondary" />
+            <h4 className="font-display font-semibold text-sm text-textPrimary">
+              Suggested Matches
+              <span className="text-[10px] font-normal text-textMuted ml-1.5">
+                ({filteredMatches.length} available)
+              </span>
+            </h4>
+          </div>
+
+          {filteredMatches.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {filteredMatches.map(peer => (
+                <PeerCard key={peer.id} peer={peer} onRequest={onRequestSwap} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-12 card flex flex-col items-center justify-center">
+              <IconGlobe size={28} className="text-textMuted mb-2 opacity-40" />
+              <p className="text-sm text-textMuted">No peers match your search.</p>
+            </div>
+          )}
+        </div>
+
+        {/* Right: Incoming Requests */}
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <IconBell size={15} className="text-accentIndigo" />
+            <h4 className="font-display font-semibold text-sm text-textPrimary">
+              Incoming Requests
+              {pendingRequests > 0 && (
+                <span className="text-[10px] font-bold text-white bg-accentIndigo px-2 py-0.5 rounded-full ml-1.5">
+                  {pendingRequests} new
+                </span>
+              )}
+            </h4>
+          </div>
+
+          {skillSwap.requests.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {skillSwap.requests.map(req => (
+                <RequestCard
+                  key={req.id}
+                  request={req}
+                  onAccept={onAccept}
+                  onIgnore={onIgnore}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="card p-6 text-center flex flex-col items-center justify-center">
+              <IconBell size={24} className="text-textMuted mb-2 opacity-40" />
+              <p className="text-xs text-textMuted">No incoming requests yet.</p>
+            </div>
+          )}
+
+          {/* Post swap nudge when no postings yet */}
+          {myPostings.length === 0 && (
+            <div
+              className="mt-4 card p-4 border-dashed border-accentViolet/25 bg-accentViolet/4 text-center cursor-pointer
+                         hover:border-accentViolet/50 hover:bg-accentViolet/8 transition-all duration-200 flex flex-col items-center"
+              onClick={() => setShowPostModal(true)}
+            >
+              <IconArrowsSwap size={24} className="text-accentViolet mb-2 opacity-50" />
+              <p className="text-xs font-display font-semibold text-textPrimary mb-1">
+                Advertise Your Skills
+              </p>
+              <p className="text-[10px] text-textMuted leading-relaxed mb-3">
+                Post what you can teach and what you want to learn to get matched faster.
+              </p>
+              <span className="text-[10px] text-accentViolet font-display font-bold">
+                Post a Swap
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* ── Post Swap Modal ── */}
+      <PostSwapModal
+        isOpen={showPostModal}
+        onClose={() => setShowPostModal(false)}
+        onSubmit={onPostSwap}
+      />
+    </div>
+  );
+}
