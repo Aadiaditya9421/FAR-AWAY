@@ -293,17 +293,18 @@ export default function App() {
 
   // Competition register (GATED)
   const handleRegisterComp = guarded((id) => {
-    setCompetitions(prev => prev.map(c => {
-      if (c.id !== id) return c;
-      if (user.coins >= c.fee) {
-        setUser(u => ({ ...u, coins: u.coins - c.fee }));
-        showToast(`Joined ${c.title}! Stakes registered.`, 'success');
-        return { ...c, registered: true, participants: c.participants + 1 };
-      } else {
-        showToast(`Not enough coins. Need ${c.fee - user.coins} more.`, 'error');
-        return c;
-      }
-    }));
+    const comp = competitions.find(c => c.id === id);
+    if (!comp) return;
+
+    if (user.coins >= comp.fee) {
+      setUser(u => ({ ...u, coins: u.coins - comp.fee }));
+      showToast(`Joined ${comp.title}! Stakes registered.`, 'success');
+      setCompetitions(prev => prev.map(c =>
+        c.id === id ? { ...c, registered: true, participants: c.participants + 1 } : c
+      ));
+    } else {
+      showToast(`Not enough coins. Need ${comp.fee - user.coins} more.`, 'error');
+    }
   });
 
   // SkillSwap handlers (GATED)
