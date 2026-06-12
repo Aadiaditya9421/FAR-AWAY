@@ -5,7 +5,7 @@ This is the fastest split deployment path:
 - Frontend: Vercel, root directory `frontend`
 - Backend: Railway, root directory `backend`
 - Database: MongoDB Atlas
-- Redis: disabled for first launch, then add Upstash/Redis Cloud later
+- Redis: Railway Redis service in the same Railway project
 
 No real secrets belong in the repo. Put production values only in the Vercel and
 Railway dashboards.
@@ -28,14 +28,22 @@ In Railway:
 
 1. New Project -> Deploy from GitHub repo.
 2. Select `Aadiaditya9421/FAR-AWAY`.
-3. Service Settings:
+3. Add Redis:
+   - Click `+ New` on the project canvas.
+   - Choose Database or Template.
+   - Add `Redis`.
+   - Keep the service name as `Redis`, or adjust the backend `REDIS_URL`
+     reference to match the service name.
+4. Backend Service Settings:
    - Root Directory: `/backend`
    - Config File Path: `/backend/railway.toml`
-4. Variables -> RAW Editor:
+5. Backend Variables -> RAW Editor:
    - Use `ops/backend.env.railway.example`
    - Replace every placeholder.
-5. Deploy.
-6. Generate a public Railway domain.
+   - Keep `REDIS_ENABLED=true`.
+   - Keep `REDIS_URL=${{Redis.REDIS_URL}}` if the Redis service is named `Redis`.
+6. Deploy.
+7. Generate a public Railway domain.
 
 Temporary first deploy note: if you do not have the Vercel frontend URL yet, use
 an HTTPS placeholder for `CLIENT_URL` and `CORS_ORIGINS`, deploy once, then come
@@ -116,5 +124,5 @@ Use the deployed Vercel URL:
 - Add a custom domain in Vercel.
 - Add the custom domain to Railway `CLIENT_URL` and `CORS_ORIGINS`.
 - Add the custom domain to Google OAuth Authorized JavaScript origins.
-- Add managed Redis and set `REDIS_ENABLED=true`.
+- Enable Railway Redis backups/monitoring if you keep Redis state in production.
 - Rotate any secret that has appeared in chat, screenshots, logs, or shared docs.
