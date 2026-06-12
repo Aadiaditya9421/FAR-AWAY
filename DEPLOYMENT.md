@@ -140,6 +140,10 @@ mutation override described in the script output.
 
 ## 6. PaaS Deployment
 
+For the fastest split deployment path, use the dedicated guide:
+
+- `ops/VERCEL_RAILWAY_DEPLOY.md`
+
 Backend on Render/Railway/Fly:
 
 - Root: `backend`
