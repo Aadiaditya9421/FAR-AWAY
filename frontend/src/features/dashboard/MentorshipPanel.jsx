@@ -1,11 +1,11 @@
 // src/features/dashboard/MentorshipPanel.jsx
-import React from 'react';
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
 import { IconArrowsSwap, IconUser } from '../../components/ui/Icons';
 
-export default function MentorshipPanel({ matches, onGoToSkillSwap }) {
+export default function MentorshipPanel({ matches, recommended = [], onGoToSkillSwap }) {
   const activeMatches = matches.filter(m => m.matched);
+  const topRecommendation = recommended[0];
 
   return (
     <div className="card p-5">
@@ -27,9 +27,26 @@ export default function MentorshipPanel({ matches, onGoToSkillSwap }) {
       {activeMatches.length === 0 ? (
         <div className="text-center py-6 px-2 flex flex-col items-center">
           <IconUser size={28} className="text-textMuted mb-2 opacity-40" />
-          <p className="text-[11px] text-textMuted leading-relaxed mb-3">
-            No active connections yet. Find peers in SkillSwap to start learning together.
-          </p>
+          {topRecommendation ? (
+            <>
+              <p className="text-[11px] text-textMuted leading-relaxed mb-2">
+                Recommended mentor for {topRecommendation.targetTopic}:
+              </p>
+              <div className="w-full p-3 rounded-lg bg-accentAmber/5 border border-accentAmber/15 mb-3 text-left">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-display font-semibold text-textPrimary">{topRecommendation.name}</p>
+                  <span className="text-[9px] font-bold text-accentAmber">{topRecommendation.score}% match</span>
+                </div>
+                <p className="text-[10px] text-textMuted mt-1">
+                  Teaches {topRecommendation.give} · wants {topRecommendation.take}
+                </p>
+              </div>
+            </>
+          ) : (
+            <p className="text-[11px] text-textMuted leading-relaxed mb-3">
+              No active connections yet. Find peers in SkillSwap to start learning together.
+            </p>
+          )}
           <Button variant="ghost" size="sm" onClick={onGoToSkillSwap}>
             Browse SkillSwap
           </Button>

@@ -1,8 +1,11 @@
 import {
   registerUser,
+  googleAuthUser,
   loginUser,
   logoutUser,
   refreshAuthToken,
+  requestPasswordReset,
+  resetPassword,
 } from "../services/authService.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
 
@@ -14,6 +17,24 @@ export async function register(req, res) {
 export async function login(req, res) {
   const data = await loginUser(req.body);
   return sendSuccess(res, { message: "Login successful", data });
+}
+
+export async function googleAuth(req, res) {
+  const data = await googleAuthUser(req.body);
+  return sendSuccess(res, { message: "Google sign-in successful", data });
+}
+
+export async function forgotPassword(req, res) {
+  const data = await requestPasswordReset(req.body);
+  return sendSuccess(res, {
+    message: "If that email is registered, a password reset link has been sent.",
+    data,
+  });
+}
+
+export async function completePasswordReset(req, res) {
+  const data = await resetPassword(req.body);
+  return sendSuccess(res, { message: "Password reset successful", data });
 }
 
 export async function logout(req, res) {

@@ -3,7 +3,7 @@
 // Enables faculty to select syllabus topics, specify constraints,
 // and generate adaptive, personalized student tests with a simulated AI pipeline.
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Button from '../../components/ui/Button';
 import {
   IconPlus, IconBook, IconCode, IconDatabase,

@@ -1,0 +1,75 @@
+# Far Away - production-like, self-contained stack
+# One command to run the whole app on a single VPS/box:
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Backend reads secrets from backend/.env (copy from backend/.env.production.example).
+# Mongo + Redis run internally by default. nginx serves the built frontend on :80
+# and proxies /api + /socket.io to the backend.
+#
+# Managed MongoDB/Redis option:
+# - Delete the mongo/redis services and their depends_on entries.
+# - Override MONGO_URI / REDIS_URL / REDIS_ENABLED via shell env or a root .env file.
+#   Compose interpolation does not read backend/.env.
+
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: production
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/far-away}
+      REDIS_URL: ${REDIS_URL:-redis://redis:6379}
+      REDIS_ENABLED: ${REDIS_ENABLED:-true}
+      TRUST_PROXY: "1"
+    expose:
+      - "5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # Same-origin: nginx proxies /api to the backend, so no absolute API URL is needed.
+        VITE_API_URL: ${VITE_API_URL:-/api}
+        VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+volumes:
+  mongo-data:
+  redis-data:

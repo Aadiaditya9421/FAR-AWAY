@@ -32,27 +32,49 @@ export async function joinCompetition(id, userId, payload = {}) {
   const competition = await Competition.findById(id);
   if (!competition) throw new AppError("Competition not found", 404, ERROR_CODES.NOT_FOUND);
 
-  const alreadyJoined = competition.participants.some((participantId) => participantId.toString() === userId.toString());
-  if (alreadyJoined) {
+  const teamName = payload.teamName || `Team ${competition.teams.length + 1}`;
+  const teamMembers = payload.teamMembers?.length ? payload.teamMembers : [userId];
+  const update = {
+    $addToSet: { participants: userId },
+  };
+
+  if (competition.type === "group") {
+    update.$push = {
+      teams: {
+        teamName,
+        members: teamMembers,
+        score: 0,
+      },
+    };
+  }
+
+  const joinedCompetition = await Competition.findOneAndUpdate(
+    {
+      _id: id,
+      participants: { $ne: userId },
+    },
+    update,
+    { new: true },
+  );
+
+  if (!joinedCompetition) {
     throw new AppError("User already joined this competition", 409, ERROR_CODES.CONFLICT);
   }
 
-  if (competition.entryFee > 0) {
-    await debitCoins(userId, competition.entryFee, `Joined competition: ${competition.title}`, "competition", competition._id);
+  try {
+    if (competition.entryFee > 0) {
+      await debitCoins(userId, competition.entryFee, `Joined competition: ${competition.title}`, "competition", competition._id);
+    }
+  } catch (error) {
+    const rollback = { $pull: { participants: userId } };
+    if (competition.type === "group") {
+      rollback.$pull.teams = { teamName, members: userId };
+    }
+    await Competition.updateOne({ _id: id }, rollback);
+    throw error;
   }
 
-  competition.participants.push(userId);
-
-  if (competition.type === "group") {
-    competition.teams.push({
-      teamName: payload.teamName || `Team ${competition.teams.length + 1}`,
-      members: payload.teamMembers?.length ? payload.teamMembers : [userId],
-      score: 0,
-    });
-  }
-
-  await competition.save();
-  return competition;
+  return joinedCompetition;
 }
 
 export async function getCompetitionStandings(id) {

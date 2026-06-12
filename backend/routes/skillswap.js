@@ -1,6 +1,12 @@
 import { Router } from "express";
 import { body } from "express-validator";
-import { acceptRequest, declineRequest, getRequests, postRequest } from "../controllers/skillswapController.js";
+import {
+  acceptRequest,
+  declineRequest,
+  getRecommendedMentors,
+  getRequests,
+  postRequest,
+} from "../controllers/skillswapController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { validateRequest } from "../middleware/validateRequest.js";
 import { mongoIdParam, paginationValidator } from "../validators/commonValidator.js";
@@ -10,13 +16,16 @@ const router = Router();
 
 router.use(authenticate);
 
+router.get("/recommended", asyncHandler(getRecommendedMentors));
 router.get("/requests", paginationValidator, validateRequest, asyncHandler(getRequests));
 router.post(
   "/request",
   [
     body("teachSkill").trim().notEmpty().withMessage("teachSkill is required"),
     body("learnSkill").trim().notEmpty().withMessage("learnSkill is required"),
+    body("message").optional().trim().isLength({ max: 500 }).withMessage("message must be at most 500 characters"),
     body("receiverId").optional().isMongoId().withMessage("receiverId must be a valid MongoDB ObjectId"),
+    body("scheduledAt").optional().isISO8601().withMessage("scheduledAt must be a valid date"),
   ],
   validateRequest,
   asyncHandler(postRequest),

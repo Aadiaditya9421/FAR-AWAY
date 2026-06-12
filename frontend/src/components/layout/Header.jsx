@@ -3,13 +3,13 @@
 // Merges all features from Sidebar and TopBar into a unified header.
 // Styled following clean, minimal, Apple/Cal.com design guidelines.
 
-import React from 'react';
+import { useState } from 'react';
 import Avatar from '../ui/Avatar';
 import {
   LogoMark,
   IconLayoutGrid, IconBook, IconTrophy,
   IconZap, IconArrowsSwap, IconSearch, IconBell,
-  IconCoin, IconFlame, IconLogOut, IconLogIn, IconPlus, IconUser,
+  IconCoin, IconFlame, IconLogOut, IconLogIn, IconPlus, IconUser, IconCode,
 } from '../ui/Icons';
 
 const STUDENT_NAV = [
@@ -17,6 +17,7 @@ const STUDENT_NAV = [
   { id: 'assessments',  Icon: IconBook,       label: 'Assessments'  },
   { id: 'leaderboard',  Icon: IconTrophy,     label: 'Leaderboards' },
   { id: 'competitions', Icon: IconZap,        label: 'Competitions' },
+  { id: 'coding',       Icon: IconCode,       label: 'Coding'       },
   { id: 'skillswap',    Icon: IconArrowsSwap, label: 'SkillSwap'    },
 ];
 
@@ -40,9 +41,10 @@ export default function Header({
   userRole = 'student',
 }) {
   const navs = userRole === 'teacher' ? TEACHER_NAV : STUDENT_NAV;
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="h-[76px] border-b border-borderColor bg-bgCard/90 backdrop-blur-md sticky top-0 z-50 w-full flex items-center justify-between px-6 lg:px-12 transition-all">
+    <header className="relative h-[76px] border-b border-borderColor bg-bgCard/90 backdrop-blur-md sticky top-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-all">
       {/* ── Left: Branding ── */}
       <div 
         className="flex items-center gap-3.5 cursor-pointer flex-shrink-0" 
@@ -63,7 +65,7 @@ export default function Header({
       </div>
 
       {/* ── Center: Horizontal Navigation Links (with wider gap) ── */}
-      <nav className="hidden md:flex items-center gap-2 lg:gap-3">
+      <nav className="hidden xl:flex items-center gap-2">
         {navs.map(({ id, Icon, label }) => (
           <button
             key={id}
@@ -77,9 +79,30 @@ export default function Header({
       </nav>
 
       {/* ── Right: Search, Stats, & Account (with increased spacing) ── */}
-      <div className="flex items-center gap-5 lg:gap-6 flex-shrink-0">
+      <div className="flex items-center gap-2 sm:gap-3 lg:gap-4 flex-shrink-0">
+        {/* Mobile menu toggle */}
+        <button
+          onClick={() => setMobileOpen(o => !o)}
+          className="xl:hidden w-9 h-9 rounded-lg border border-borderColor flex items-center justify-center hover:bg-bgSecondary transition-colors text-textSecondary"
+          title="Menu"
+          aria-label="Toggle navigation menu"
+        >
+          {mobileOpen ? (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          ) : (
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="3" y1="6" x2="21" y2="6" />
+              <line x1="3" y1="12" x2="21" y2="12" />
+              <line x1="3" y1="18" x2="21" y2="18" />
+            </svg>
+          )}
+        </button>
+
         {/* Search Input */}
-        <div className="relative hidden lg:block">
+        <div className="relative hidden 2xl:block">
           <IconSearch
             size={13}
             className="absolute left-3 top-1/2 -translate-y-1/2 text-textMuted pointer-events-none"
@@ -97,14 +120,14 @@ export default function Header({
 
         {/* Stats Pill Capsule */}
         {userRole !== 'teacher' && (
-          <div className="flex items-center gap-3">
+          <div className="hidden lg:flex items-center gap-3">
             {/* Coins balance */}
             <button
               onClick={onCoinClick}
               className="flex items-center gap-1 bg-accentAmber/8 border border-accentAmber/20
                          text-accentAmber px-3 py-1.5 rounded-full text-[11px] font-semibold
                          hover:bg-accentAmber/15 transition-all active:scale-95 select-none tabular-nums"
-              title="Claim bonus coins"
+              title="Claim daily bonus coins"
             >
               <IconCoin size={13} />
               <span>{user.coins}</span>
@@ -164,6 +187,31 @@ export default function Header({
           </button>
         )}
       </div>
+
+      {/* ── Mobile slide-down navigation ── */}
+      {mobileOpen && (
+        <div className="xl:hidden absolute top-full left-0 right-0 bg-bgCard border-b border-borderColor shadow-glass px-4 sm:px-6 py-3 flex flex-col gap-1 animate-fadeIn">
+          {navs.map(({ id, Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => { onTabChange(id); setMobileOpen(false); }}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-display font-semibold transition-colors ${activeTab === id ? 'bg-accentIndigo/10 text-accentIndigo' : 'text-textSecondary hover:bg-bgSecondary'}`}
+            >
+              <Icon size={16} />
+              <span>{label}</span>
+            </button>
+          ))}
+          {/* Mobile search */}
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={e => onSearchChange(e.target.value)}
+            disabled={activeTab === 'quiz'}
+            placeholder={userRole === 'teacher' ? 'Search student…' : 'Search…'}
+            className="input mt-2"
+          />
+        </div>
+      )}
     </header>
   );
 }

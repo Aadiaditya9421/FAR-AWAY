@@ -37,6 +37,17 @@ export async function updateLeaderboardForSubmission({ userId, topic, score, coi
   );
 
   await recalculateTopicRanks(topic);
+
+  try {
+    const { getIO } = await import("../sockets/notificationSocket.js");
+    const { emitLeaderboardUpdate } = await import("../sockets/liveLeaderboard.js");
+    const io = getIO();
+    const { items } = await getTopicLeaderboard(topic, { page: 1, limit: 10 });
+    emitLeaderboardUpdate(io, topic, { items });
+  } catch (err) {
+    // Ignore if Socket.io is not initialized or fail-safe
+  }
+
   return entry;
 }
 

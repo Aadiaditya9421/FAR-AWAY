@@ -1,11 +1,10 @@
 // src/features/dashboard/StatsRow.jsx
-import React from 'react';
 import StatCard from '../../components/ui/StatCard';
 import { IconFlame, IconCoin, IconGlobe, IconZap } from '../../components/ui/Icons';
 
 export default function StatsRow({ user, onCoinClick }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <StatCard
         label="Daily Streak"
         value={`${user.streak} Days`}
@@ -18,7 +17,7 @@ export default function StatsRow({ user, onCoinClick }) {
         icon={<IconCoin size={18} className="text-accentAmber" />}
         accent="amber"
         onClick={onCoinClick}
-        sublabel="Click for a bonus!"
+        sublabel="Daily claim"
       />
       <StatCard
         label="Global Rank"

@@ -9,22 +9,28 @@
     "start": "node server.js",
     "seed": "node scripts/seed.js",
     "smoke": "node scripts/smoke.js",
-    "check": "node --check server.js"
+    "verify:phase4": "node scripts/verify-phase4.js",
+    "verify:phase4.5": "node scripts/verify-phase4-5.js",
+    "check": "node --check server.js && node --check config/env.js && node --check models/User.js && node --check models/Coin.js && node --check routes/auth.js && node --check routes/coins.js && node --check routes/analytics.js && node --check routes/insights.js && node --check controllers/authController.js && node --check controllers/coinController.js && node --check controllers/analyticsController.js && node --check controllers/insightsController.js && node --check services/authService.js && node --check services/emailService.js && node --check services/coinService.js && node --check services/competitionService.js && node --check services/adaptiveService.js && node --check services/aiTutorService.js && node --check services/analyticsService.js && node --check services/assessmentService.js && node --check services/learningInsightService.js && node --check services/questionSelectionService.js && node --check validators/authValidator.js && node --check validators/assessmentValidator.js && node --check validators/insightsValidator.js && node --check sockets/notificationSocket.js && node --check sockets/socketAuth.js && node --check scripts/databaseSafety.js && node --check scripts/seed.js && node --check scripts/verify-phase4.js && node --check scripts/verify-phase4-5.js"
   },
   "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "@socket.io/redis-adapter": "^8.3.0",
     "bcryptjs": "^2.4.3",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.0",
     "express-validator": "^7.2.1",
+    "google-auth-library": "^10.7.0",
     "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.9.5",
     "morgan": "^1.10.0",
     "nodemailer": "^8.0.11",
     "redis": "^4.7.0",
-    "socket.io": "^4.8.1"
+    "socket.io": "^4.8.1",
+    "winston": "^3.19.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.9"

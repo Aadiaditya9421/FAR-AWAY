@@ -43,6 +43,12 @@ const userProgressSchema = new mongoose.Schema(
       enum: ["beginner", "intermediate", "advanced"],
       default: "beginner",
     },
+    mastery: {
+      type: Number,
+      default: 0.25,
+      min: 0,
+      max: 1,
+    },
   },
   { timestamps: true },
 );

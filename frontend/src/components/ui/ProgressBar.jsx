@@ -1,5 +1,4 @@
 // src/components/ui/ProgressBar.jsx
-import React from 'react';
 
 /**
  * ProgressBar — thin track with gradient fill

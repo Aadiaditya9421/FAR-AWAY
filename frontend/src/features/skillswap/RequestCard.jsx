@@ -1,5 +1,4 @@
 // src/features/skillswap/RequestCard.jsx
-import React from 'react';
 import Avatar from '../../components/ui/Avatar';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';

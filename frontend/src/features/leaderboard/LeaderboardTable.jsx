@@ -1,5 +1,4 @@
 // src/features/leaderboard/LeaderboardTable.jsx
-import React from 'react';
 import Avatar from '../../components/ui/Avatar';
 import Badge from '../../components/ui/Badge';
 
@@ -26,6 +25,8 @@ function RankBadge({ rank }) {
 export default function LeaderboardTable({ entries, currentUserName = 'John Doe' }) {
   return (
     <div className="card overflow-hidden">
+      <div className="overflow-x-auto">
+        <div className="min-w-[560px]">
       {/* Table Header */}
       <div className="grid grid-cols-12 gap-2 px-4 py-3 border-b border-borderColor bg-bgSecondary/50">
         <div className="col-span-1 label-caps">Rank</div>
@@ -89,6 +90,8 @@ export default function LeaderboardTable({ entries, currentUserName = 'John Doe'
             </div>
           );
         })}
+      </div>
+        </div>
       </div>
     </div>
   );

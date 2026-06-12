@@ -1,5 +1,4 @@
 // src/features/leaderboard/TopicPillGroup.jsx
-import React from 'react';
 
 const TOPICS = ['DSA', 'WebDev', 'Backend', 'React'];
 const ICONS  = { DSA: '🔗', WebDev: '🎨', Backend: '⚙️', React: '⚛️' };

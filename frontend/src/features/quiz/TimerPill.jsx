@@ -1,5 +1,4 @@
 // src/features/quiz/TimerPill.jsx
-import React from 'react';
 
 export default function TimerPill({ seconds }) {
   const min = Math.floor(seconds / 60);

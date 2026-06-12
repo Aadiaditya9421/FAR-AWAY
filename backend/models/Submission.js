@@ -40,6 +40,12 @@ const submissionSchema = new mongoose.Schema(
       required: true,
       index: true,
     },
+    attemptId: {
+      type: String,
+      default: "",
+      trim: true,
+      index: true,
+    },
     answers: {
       type: [answerSchema],
       default: [],
@@ -64,6 +70,13 @@ const submissionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    questionsShown: {
+      type: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "QuestionBank",
+      }],
+      default: [],
+    },
     feedback: {
       type: String,
       default: "",
@@ -71,6 +84,9 @@ const submissionSchema = new mongoose.Schema(
     reviewedBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+    },
+    reviewedAt: {
+      type: Date,
     },
   },
   { timestamps: true },

@@ -1,5 +1,4 @@
 // src/features/dashboard/LearningPath.jsx
-import React from 'react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import {
@@ -10,8 +9,8 @@ import {
 export default function LearningPath({ assessments, onStart, onViewAll }) {
   return (
     <div className="card p-5">
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex items-center gap-2">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-4">
+        <div className="flex items-center gap-2 min-w-0">
           <IconBook size={16} className="text-accentIndigo" />
           <h4 className="font-display font-semibold text-sm text-textPrimary">
             Recommended Learning Path
@@ -26,7 +25,7 @@ export default function LearningPath({ assessments, onStart, onViewAll }) {
         {assessments.map(item => (
           <div
             key={item.id}
-            className="flex items-center justify-between p-3.5 border border-borderColor rounded-lg
+            className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3.5 border border-borderColor rounded-lg
                        bg-bgSecondary/40 hover:bg-bgCardHover hover:border-borderHover
                        transition-all duration-150 group"
           >
@@ -41,6 +40,11 @@ export default function LearningPath({ assessments, onStart, onViewAll }) {
               <div className="min-w-0">
                 <div className="flex items-center gap-2 mb-1 flex-wrap">
                   <Badge variant={item.difficulty}>{item.difficulty}</Badge>
+                  {item.isAdaptive && (
+                    <Badge className="bg-accentIndigo/10 text-accentIndigo border border-accentIndigo/20 font-semibold">
+                      Personalized
+                    </Badge>
+                  )}
                   <strong className="text-xs text-textPrimary truncate font-display group-hover:text-accentIndigo transition-colors">
                     {item.title}
                   </strong>
@@ -57,7 +61,7 @@ export default function LearningPath({ assessments, onStart, onViewAll }) {
                 </div>
               </div>
             </div>
-            <Button variant="primary" size="sm" onClick={() => onStart(item)} className="ml-3 flex-shrink-0">
+            <Button variant="primary" size="sm" onClick={() => onStart(item)} className="w-full sm:w-auto sm:ml-3 flex-shrink-0">
               Start
             </Button>
           </div>

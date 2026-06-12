@@ -1,5 +1,4 @@
 // src/features/dashboard/SpotlightCard.jsx
-import React from 'react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { IconZap, IconCoin, IconCheck } from '../../components/ui/Icons';

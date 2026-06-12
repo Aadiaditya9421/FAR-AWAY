@@ -1,5 +1,4 @@
 // src/features/competitions/CompetitionsView.jsx
-import React from 'react';
 import CompetitionCard from './CompetitionCard';
 import { IconCoin, IconClock, IconCheck, IconSearch } from '../../components/ui/Icons';
 

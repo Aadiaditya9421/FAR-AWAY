@@ -1,12 +1,76 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TopicPillGroup from './TopicPillGroup';
 import LeaderboardTable from './LeaderboardTable';
 import Badge from '../../components/ui/Badge';
 import { IconTarget } from '../../components/ui/Icons';
+import { LeaderboardService } from '../../services';
+import { getLeaderboardSocket } from '../../lib/socket';
 
-export default function LeaderboardView({ leaderboards, currentUserName = 'John Doe' }) {
+export default function LeaderboardView({ currentUserName = 'John Doe' }) {
   const [topic, setTopic] = useState('DSA');
-  const entries = leaderboards[topic] || [];
+  const [entries, setEntries] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  const fetchRankings = async (currentTopic) => {
+    setLoading(true);
+    try {
+      const res = await LeaderboardService.byTopic(currentTopic);
+      // Map API leaderboard format: { score, xp, badge, userId } -> { name, avatar, score, xp, badge }
+      const mapped = (res || []).map(e => {
+        const name = e.userId ? `${e.userId.firstName} ${e.userId.lastName}`.trim() : 'Anonymous';
+        const avatar = name.split(' ').map(x => x[0]).join('').toUpperCase();
+        return {
+          name,
+          avatar,
+          score: e.score,
+          xp: e.xp,
+          badge: e.badge || 'Beginner',
+        };
+      });
+      setEntries(mapped);
+    } catch (err) {
+      console.error('Failed to load leaderboard topic rankings:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch rankings dynamically
+    fetchRankings(topic);
+
+    // Dynamic subscription to Socket.io namespace room
+    const socket = getLeaderboardSocket();
+    if (socket) {
+      socket.emit('subscribe', topic);
+
+      socket.on('leaderboard:updated', (payload) => {
+        if (payload.topic.toLowerCase() === topic.toLowerCase()) {
+          const mapped = (payload.items || []).map(e => {
+            const name = e.userId ? `${e.userId.firstName} ${e.userId.lastName}`.trim() : 'Anonymous';
+            const avatar = name.split(' ').map(x => x[0]).join('').toUpperCase();
+            return {
+              name,
+              avatar,
+              score: e.score,
+              xp: e.xp,
+              badge: e.badge || 'Beginner',
+            };
+          });
+          setEntries(mapped);
+        }
+      });
+    }
+
+    return () => {
+      const s = getLeaderboardSocket();
+      if (s) {
+        s.emit('unsubscribe', topic);
+        s.off('leaderboard:updated');
+      }
+    };
+  }, [topic]);
+
   const myEntry = entries.find(e => e.name === currentUserName);
   const myRank  = entries.indexOf(myEntry) + 1;
 
@@ -51,7 +115,13 @@ export default function LeaderboardView({ leaderboards, currentUserName = 'John 
       )}
 
       {/* Table */}
-      <LeaderboardTable entries={entries} currentUserName={currentUserName} />
+      {loading && entries.length === 0 ? (
+        <div className="py-12 card text-center text-textMuted animate-pulse">
+          Loading leaderboard rankings...
+        </div>
+      ) : (
+        <LeaderboardTable entries={entries} currentUserName={currentUserName} />
+      )}
 
       {/* Footer note */}
       <p className="text-[10px] text-textMuted mt-4 text-center">

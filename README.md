@@ -28,6 +28,10 @@ Services:
 - MongoDB: localhost:27017
 - Redis: localhost:6379
 
+The Docker development stack forces the backend to use the local MongoDB and
+Redis containers, even if `backend/.env` contains external database settings.
+Use `DEPLOYMENT.md` or the production compose file for hosted services.
+
 Seeded accounts all use password `Admin1234`:
 
 - `admin@faraway.local`

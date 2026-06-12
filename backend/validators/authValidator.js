@@ -21,6 +21,26 @@ export const loginValidator = [
   body("password").notEmpty().withMessage("Password is required"),
 ];
 
+export const googleAuthValidator = [
+  body("credential").isString().trim().notEmpty().withMessage("Google credential is required"),
+  body("role").optional().isIn(["student", "teacher"]).withMessage("role must be student or teacher"),
+];
+
+export const forgotPasswordValidator = [
+  body("email").isEmail().withMessage("Valid email is required").normalizeEmail(),
+];
+
+export const resetPasswordValidator = [
+  body("token").isString().trim().notEmpty().withMessage("Reset token is required"),
+  body("password")
+    .isLength({ min: 8 })
+    .withMessage("Password must be at least 8 characters")
+    .matches(/[A-Z]/)
+    .withMessage("Password must include one uppercase letter")
+    .matches(/[0-9]/)
+    .withMessage("Password must include one number"),
+];
+
 export const refreshTokenValidator = [
   body("refreshToken").notEmpty().withMessage("refreshToken is required"),
 ];

@@ -1,5 +1,4 @@
 // src/components/ui/StatCard.jsx
-import React from 'react';
 
 /**
  * StatCard — dashboard metric card

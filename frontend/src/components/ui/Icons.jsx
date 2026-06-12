@@ -3,7 +3,6 @@
 // Pixel-perfect 24×24 icons. All stroke-based, 2px weight, round caps/joins.
 // Usage: <IconBook size={18} className="text-textMuted" />
 
-import React from 'react';
 
 const Ico = ({ size, className, children, viewBox = '0 0 24 24' }) => (
   <svg
@@ -195,6 +194,12 @@ export const IconCode = ({ size = 18, className = '' }) => (
   <Ico size={size} className={className}>
     <polyline points="16 18 22 12 16 6" />
     <polyline points="8 6 2 12 8 18" />
+  </Ico>
+);
+
+export const IconPlay = ({ size = 18, className = '' }) => (
+  <Ico size={size} className={className}>
+    <polygon points="5 3 19 12 5 21 5 3" />
   </Ico>
 );
 

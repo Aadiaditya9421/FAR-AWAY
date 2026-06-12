@@ -2,7 +2,6 @@
 // ─── Far Away — "Sign in to continue" gating modal ───
 // Shown when a guest tries to use a functional action.
 
-import React from 'react';
 
 export default function AuthModal({ isOpen, onClose, onSignIn, onRegister }) {
   if (!isOpen) return null;
