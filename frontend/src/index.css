@@ -1,0 +1,355 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+@import "tailwindcss";
+@config "../tailwind.config.js";
+
+/* ─── Design Utilities ─────────────────────────── */
+
+@utility card {
+  @apply bg-bgCard border border-borderColor rounded-lg transition-all duration-200;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 font-sans font-medium
+         text-sm leading-tight select-none whitespace-nowrap;
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  transition: background 0.14s ease, border-color 0.14s ease, box-shadow 0.14s ease, transform 0.1s ease;
+}
+
+@utility badge {
+  @apply inline-flex items-center gap-1 font-sans font-semibold text-[11px]
+         tracking-wide px-2.5 py-0.5 rounded-full;
+}
+
+@utility nav-item {
+  @apply flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg
+         transition-all duration-150 text-left select-none w-full;
+}
+
+@utility pill-tab {
+  @apply px-4 py-1.5 rounded-full text-xs font-semibold
+         transition-all duration-150 select-none;
+}
+
+@utility quiz-option {
+  @apply flex items-center gap-3 p-3.5 border rounded-lg cursor-pointer
+         transition-all duration-150;
+}
+
+@utility lb-row {
+  @apply flex items-center gap-4 p-3.5 rounded-lg transition-all duration-150;
+}
+
+/* ─── CSS Custom Properties ──────────────────────── */
+:root {
+  --color-primary:  #fa520f;
+  --color-ink:      #1f1f1f;
+  --color-steel:    #8a8a8a;
+  --color-hairline: #e5e7eb;
+  --color-canvas:   #ffffff;
+  --color-cream:    #fff8e0;
+
+  --radius-sm:   6px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
+
+  --shadow-card:  0 1px 2px rgba(0,0,0,0.05), 0 4px 12px rgba(0,0,0,0.04);
+  --shadow-hover: 0 2px 4px rgba(0,0,0,0.07), 0 8px 20px rgba(0,0,0,0.06);
+  --shadow-modal: 0 16px 48px rgba(0,0,0,0.12);
+
+  --transition: 0.15s ease;
+  --transition-spring: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Base ───────────────────────────────────────── */
+@layer base {
+  *, *::before, *::after { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+
+  body {
+    @apply bg-bgPrimary text-textPrimary font-sans antialiased min-h-screen overflow-x-hidden;
+    line-height: 1.55;
+    font-size: 15px;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb:hover { background: #c7c7c7; }
+
+  /* Focus */
+  :focus-visible { outline: 2px solid #fa520f; outline-offset: 2px; border-radius: 4px; }
+
+  button { cursor: pointer; }
+}
+
+/* ─── Component Layer ────────────────────────────── */
+@layer components {
+
+  /* ── Glassmorphic / Frosted (light, Cal.com-style) ── */
+  .glass {
+    background: rgba(255, 255, 255, 0.88);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(229, 231, 235, 0.8);
+  }
+
+  .glass-strong {
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(28px);
+    -webkit-backdrop-filter: blur(28px);
+    border: 1px solid #e5e7eb;
+    box-shadow: var(--shadow-modal);
+  }
+
+  /* ── Card Variants ── */
+  .card-elevated   { @apply card; box-shadow: var(--shadow-card); }
+  .card-cream      { background: #fff8e0; border: 1px solid #e6d5a8; border-radius: 12px; }
+  .card-interactive {
+    @apply card cursor-pointer;
+    transition: box-shadow var(--transition), border-color var(--transition), transform 0.12s ease;
+  }
+  .card-interactive:hover {
+    border-color: #c7c7c7;
+    box-shadow: var(--shadow-hover);
+    transform: translateY(-1px);
+  }
+
+  /* ── Buttons (Mistral-style: 8px radius, 14px Inter 500) ── */
+
+  /* Primary — Mistral Orange */
+  .btn-primary {
+    @apply btn;
+    background: #fa520f;
+    color: #fff;
+    border-color: #fa520f;
+  }
+  .btn-primary:hover  { background: #e8490d; border-color: #e8490d; }
+  .btn-primary:active { background: #cc3a05; border-color: #cc3a05; transform: scale(0.99); }
+  .btn-primary:disabled { background: #e5e7eb; border-color: #e5e7eb; color: #a8a8a8; cursor: not-allowed; transform: none; }
+
+  /* Secondary — Cal.com outlined */
+  .btn-secondary {
+    @apply btn;
+    background: transparent;
+    color: #1f1f1f;
+    border-color: #c7c7c7;
+  }
+  .btn-secondary:hover  { background: #f5f5f5; }
+  .btn-secondary:active { background: #eeeeee; transform: scale(0.99); }
+
+  /* Dark — Cal.com dark */
+  .btn-dark {
+    @apply btn;
+    background: #1f1f1f;
+    color: #fff;
+    border-color: #1f1f1f;
+  }
+  .btn-dark:hover  { background: #333; }
+  .btn-dark:active { background: #111; }
+
+  /* Ghost */
+  .btn-ghost {
+    @apply btn;
+    background: transparent;
+    color: #8a8a8a;
+    border-color: transparent;
+  }
+  .btn-ghost:hover { background: #f5f5f5; color: #1f1f1f; }
+
+  /* Success / Danger / Amber — semantic variants */
+  .btn-success { @apply btn bg-accentEmerald/10 text-accentEmerald border border-accentEmerald/30; }
+  .btn-success:hover { @apply bg-accentEmerald/20; }
+  .btn-danger  { @apply btn bg-accentCrimson/10 text-accentCrimson border border-accentCrimson/30; }
+  .btn-danger:hover  { @apply bg-accentCrimson/20; }
+  .btn-amber   { @apply btn bg-accentAmber/10 text-accentAmber border border-accentAmber/30; }
+
+  .btn-sm   { font-size: 13px; padding: 6px 14px; }
+  .btn-icon { width: 36px; height: 36px; padding: 0; border-radius: 8px; }
+
+  /* ── Badges ── */
+  .badge-easy       { @apply badge; background: rgba(16,185,129,0.10); color: #065f46; border: 1px solid rgba(16,185,129,0.2); }
+  .badge-medium     { @apply badge; background: rgba(245,158,11,0.10); color: #92400e; border: 1px solid rgba(245,158,11,0.2); }
+  .badge-hard       { @apply badge; background: rgba(239,68,68,0.10);  color: #991b1b; border: 1px solid rgba(239,68,68,0.2); }
+  .badge-live       { @apply badge; background: rgba(16,185,129,0.10); color: #065f46; border: 1px solid rgba(16,185,129,0.2); }
+  .badge-upcoming   { @apply badge; background: #fff8e0; color: #92400e; border: 1px solid #e6d5a8; }
+  .badge-completed  { @apply badge; background: #f5f5f5; color: #8a8a8a; border: 1px solid #e5e7eb; }
+  .badge-open       { @apply badge; background: rgba(250,82,15,0.08); color: #cc3a05; border: 1px solid rgba(250,82,15,0.2); }
+  .badge-closed     { @apply badge; background: #f5f5f5; color: #8a8a8a; border: 1px solid #e5e7eb; }
+  .badge-expert     { @apply badge; background: rgba(250,82,15,0.08); color: #cc3a05; border: 1px solid rgba(250,82,15,0.2); }
+  .badge-intermediate { @apply badge; background: #fff8e0; color: #92400e; border: 1px solid #e6d5a8; }
+  .badge-beginner   { @apply badge; background: #f5f5f5; color: #4a4a4a; border: 1px solid #e5e7eb; }
+
+  /* ── Input (Mistral text-input spec) ── */
+  .input {
+    width: 100%;
+    background: #fff;
+    color: #1f1f1f;
+    border: 1px solid #c7c7c7;
+    border-radius: 8px;
+    padding: 10px 14px;
+    height: 44px;
+    font-size: 14px;
+    font-family: 'Inter', sans-serif;
+    outline: none;
+    transition: border-color 0.14s ease, box-shadow 0.14s ease;
+  }
+  .input::placeholder { color: #a8a8a8; }
+  .input:focus { border-color: #fa520f; box-shadow: 0 0 0 3px rgba(250,82,15,0.12); }
+  .input:disabled { background: #f5f5f5; cursor: not-allowed; color: #a8a8a8; }
+
+  /* ── Navigation ── */
+  .nav-item-active {
+    @apply nav-item;
+    background: #fa520f;
+    color: #fff;
+    font-weight: 600;
+  }
+  .nav-item-idle {
+    @apply nav-item;
+    color: #4a4a4a;
+  }
+  .nav-item-idle:hover { background: #eeeeee; color: #1f1f1f; }
+
+  /* ── Horizontal Navigation (Apple/Cal.com style) ── */
+  .top-nav-item, .top-nav-item-active, .top-nav-item-idle {
+    @apply inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg
+           transition-all duration-150 select-none cursor-pointer;
+  }
+  .top-nav-item-active {
+    background: #fa520f;
+    color: #ffffff;
+  }
+  .top-nav-item-idle {
+    color: #555555;
+  }
+  .top-nav-item-idle:hover {
+    background: #f5f5f5;
+    color: #1f1f1f;
+  }
+
+
+  /* ── Pill Tabs (Cal.com nav-pill-group) ── */
+  .pill-group {
+    @apply flex items-center gap-0.5;
+    padding: 4px;
+    background: #f5f5f5;
+    border-radius: 9999px;
+    border: 1px solid #e5e7eb;
+  }
+  .pill-tab-active { @apply pill-tab bg-bgCard text-textPrimary shadow-card; border: 1px solid #e5e7eb; }
+  .pill-tab-idle   { @apply pill-tab text-textMuted; }
+  .pill-tab-idle:hover { color: #4a4a4a; }
+
+  /* ── Progress Bar ── */
+  .progress-track { @apply w-full rounded-full overflow-hidden; height: 4px; background: #e5e7eb; }
+  .progress-fill  { height: 100%; border-radius: 9999px; transition: width 0.5s ease; background: #fa520f; }
+
+  /* ── Stat Card ── */
+  .stat-card {
+    @apply card p-5 flex items-center justify-between gap-4;
+    transition: box-shadow var(--transition), border-color var(--transition), transform 0.12s ease;
+  }
+  .stat-card:hover { border-color: #c7c7c7; box-shadow: var(--shadow-hover); transform: translateY(-1px); }
+
+  /* ── Avatar ── */
+  .avatar { @apply flex-shrink-0 flex items-center justify-center rounded-full font-sans font-semibold text-sm select-none; }
+
+  /* ── Divider ── */
+  .divider { border-top: 1px solid #e5e7eb; }
+
+  /* ── Quiz Options ── */
+  .quiz-option-idle     { @apply quiz-option border-borderColor; }
+  .quiz-option-idle:hover { border-color: #c7c7c7; background: #f5f5f5; }
+  .quiz-option-selected { @apply quiz-option; border-color: #fa520f; background: rgba(250,82,15,0.04); }
+
+  /* ── Leaderboard rows ── */
+  .lb-row-normal  { @apply lb-row; }
+  .lb-row-normal:hover { background: #f5f5f5; }
+  .lb-row-current { @apply lb-row; background: rgba(250,82,15,0.04); border: 1px solid rgba(250,82,15,0.15); border-radius: 8px; }
+  .lb-row-top1    { @apply lb-row; background: rgba(245,158,11,0.05); border: 1px solid rgba(245,158,11,0.15); border-radius: 8px; }
+
+  /* ── Typography ── */
+  .heading-display {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.04em;
+  }
+  .heading-section { font-weight: 600; font-size: 18px; color: #1f1f1f; letter-spacing: -0.01em; }
+  .label-caps {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #8a8a8a;
+    font-family: 'Inter', sans-serif;
+  }
+
+  /* ── Sunset stripe (Mistral brand signature) ── */
+  .sunset-stripe {
+    height: 5px;
+    background: linear-gradient(90deg, #fa520f 0%, #ffa110 30%, #ffb83e 55%, #ffd06a 75%, #fff8e0 100%);
+  }
+}
+
+/* ─── Utilities ──────────────────────────────────── */
+@layer utilities {
+  /* Gradient text — orange for Mistral style */
+  .text-gradient-indigo {
+    background: linear-gradient(135deg, #fa520f, #ffa110);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .text-gradient-amber {
+    background: linear-gradient(135deg, #f59e0b, #fbbf24);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  /* Glows (subtle, light-theme appropriate) */
+  .glow-indigo  { box-shadow: 0 0 0 3px rgba(250,82,15,0.12); }
+  .glow-amber   { box-shadow: 0 0 16px rgba(245,158,11,0.15); }
+  .glow-emerald { box-shadow: 0 0 16px rgba(16,185,129,0.15); }
+
+  /* Live pulse dot */
+  .live-dot {
+    @apply w-2 h-2 rounded-full bg-accentEmerald inline-block;
+    animation: pulseDot 2s ease-in-out infinite;
+  }
+
+  /* Shimmer skeleton */
+  .shimmer {
+    background: linear-gradient(90deg, #f5f5f5 25%, #eeeeee 50%, #f5f5f5 75%);
+    background-size: 200% 100%;
+    animation: shimmer 2s infinite;
+  }
+
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+}
+
+/* ─── Keyframes ──────────────────────────────────── */
+@keyframes pulseDot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.6; transform: scale(0.85); }
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.97) translateY(12px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.animate-modal-in   { animation: modalIn 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
+.animate-overlay-in { animation: overlayIn 0.18s ease-out; }
