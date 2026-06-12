@@ -395,6 +395,9 @@ Completed verification:
 - Backend env examples document `GEMINI_API_KEY` and `GEMINI_MODEL`; Gemini remains optional.
 - Deployment runbook now covers credential rotation, Google OAuth origins, SMTP reset-email checks, Gemini fallback behavior, and Atlas mutation safety.
 - Browser viewport checks passed at 390px, 768px, and 1280px with no horizontal overflow.
+- Backend and frontend now include `predeploy:check` and `predeploy:strict` scripts that validate production config without printing secrets.
+- CI now runs on `aditya-backend`, includes predeploy reports, and validates production Compose config with example env placeholders.
+- Current report-only checks flag the remaining non-secret deployment blockers: deployed HTTPS origins, Google OAuth client IDs, production `NODE_ENV`, and Redis/hosting choices.
 
 ## Immediate Execution Order
 

@@ -2,9 +2,9 @@ name: Far Away CI
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, aditya-backend ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, aditya-backend ]
 
 jobs:
   backend:
@@ -30,6 +30,10 @@ jobs:
         run: npm run check
         working-directory: backend
 
+      - name: Predeploy config report
+        run: npm run predeploy:check
+        working-directory: backend
+
   frontend:
     name: Frontend CI
     runs-on: ubuntu-latest
@@ -53,6 +57,24 @@ jobs:
         run: npm run lint
         working-directory: frontend
 
+      - name: Predeploy config report
+        run: npm run predeploy:check
+        working-directory: frontend
+
       - name: Build frontend
         run: npm run build
         working-directory: frontend
+
+  production-compose:
+    name: Production Compose Config
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Prepare example backend env
+        run: cp backend/.env.production.example backend/.env
+
+      - name: Validate production compose
+        run: docker compose -f docker-compose.prod.yml config

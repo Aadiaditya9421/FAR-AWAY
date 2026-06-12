@@ -66,6 +66,9 @@ image. Also add the deployed frontend origin in Google Cloud OAuth settings.
 From the project root:
 
 ```bash
+cd backend && npm run predeploy:strict
+cd ../frontend && npm run predeploy:strict
+cd ..
 docker compose -f docker-compose.prod.yml config
 docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml ps
@@ -159,9 +162,21 @@ Local pre-deploy checks:
 
 ```bash
 cd backend && npm run check
+npm run predeploy:check
 cd ../frontend && npm run lint && npm run build
+npm run predeploy:check
 cd .. && docker compose -f docker-compose.prod.yml config
 ```
+
+Strict production gates, after real hosting env values are present:
+
+```bash
+cd backend && npm run predeploy:strict
+cd ../frontend && npm run predeploy:strict
+```
+
+The strict gates do not print secret values. They only report missing,
+placeholder, local-only, or non-HTTPS production configuration.
 
 Running local dev stack check:
 
