@@ -77,4 +77,4 @@ jobs:
         run: cp backend/.env.production.example backend/.env
 
       - name: Validate production compose
-        run: docker compose -f docker-compose.prod.yml config
+        run: docker compose -f docker-compose.prod.yml config --quiet

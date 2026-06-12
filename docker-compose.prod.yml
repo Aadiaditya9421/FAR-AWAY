@@ -2,9 +2,13 @@
 # One command to run the whole app on a single VPS/box:
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
-# Backend reads secrets from backend/.env (copy from backend/.env.production.example).
+# Backend reads secrets from backend/.env (copy from backend/.env.production.example
+# or ops/backend.env.single-vps.example).
 # Mongo + Redis run internally by default. nginx serves the built frontend on :80
 # and proxies /api + /socket.io to the backend.
+#
+# Set FRONTEND_PORT=127.0.0.1:8080 when putting this stack behind host-level
+# Caddy/nginx/Traefik for HTTPS, then proxy that local port from your TLS layer.
 #
 # Managed MongoDB/Redis option:
 # - Delete the mongo/redis services and their depends_on entries.
@@ -65,7 +69,7 @@ services:
         VITE_GOOGLE_CLIENT_ID: ${VITE_GOOGLE_CLIENT_ID:-}
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "${FRONTEND_PORT:-80}:80"
     depends_on:
       backend:
         condition: service_healthy

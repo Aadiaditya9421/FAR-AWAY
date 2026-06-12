@@ -24,7 +24,13 @@ frontend. Managed MongoDB/Redis and PaaS notes are included after that.
 
 ## 2. Prepare `backend/.env`
 
-Copy the production example and fill real values:
+For one VPS with bundled MongoDB/Redis, copy the single-server example:
+
+```bash
+cp ops/backend.env.single-vps.example backend/.env
+```
+
+For managed MongoDB/Redis or PaaS, copy the generic production example:
 
 ```bash
 cp backend/.env.production.example backend/.env
@@ -54,8 +60,10 @@ openssl rand -base64 48
 openssl rand -base64 48
 ```
 
-For the self-contained Docker stack, Compose overrides `MONGO_URI`, `REDIS_URL`,
-and `REDIS_ENABLED` to use the internal `mongo` and `redis` services.
+For the self-contained Docker stack, use `mongodb://mongo:27017/far-away` and
+`redis://redis:6379` in `backend/.env`. Compose also has these defaults, but
+putting them in `backend/.env` lets `npm run predeploy:strict` pass before the
+containers start.
 
 If Google sign-in is enabled, set the same public OAuth client ID as
 `VITE_GOOGLE_CLIENT_ID` in the shell or root `.env` before building the frontend
@@ -69,7 +77,7 @@ From the project root:
 cd backend && npm run predeploy:strict
 cd ../frontend && npm run predeploy:strict
 cd ..
-docker compose -f docker-compose.prod.yml config
+docker compose -f docker-compose.prod.yml config --quiet
 docker compose -f docker-compose.prod.yml up -d --build
 docker compose -f docker-compose.prod.yml ps
 ```
@@ -81,6 +89,21 @@ curl http://YOUR_SERVER/api/health
 ```
 
 Expected: `"success": true`, with MongoDB and Redis connected.
+
+## 4. Add HTTPS With A Domain
+
+For global production, do not expose plain HTTP directly to users. The simplest
+VPS path is a host-level reverse proxy such as Caddy:
+
+1. Point DNS `A` records for `yourdomain.com` and `www.yourdomain.com` to the VPS.
+2. Copy `ops/compose.env.production.example` to root `.env`.
+3. Set `FRONTEND_PORT=127.0.0.1:8080` in root `.env`.
+4. Use `ops/Caddyfile.external.example` as the host Caddy template.
+5. Set `CLIENT_URL` and `CORS_ORIGINS` in `backend/.env` to the final HTTPS origins.
+
+The app still uses same-origin `/api`, so Caddy only proxies to the frontend
+container and nginx inside the frontend container proxies API and Socket.io
+traffic to the backend container.
 
 Seed demo data only for a demo database:
 
@@ -95,7 +118,7 @@ is allowed by default. To seed a managed/remote database intentionally:
 docker compose -f docker-compose.prod.yml exec -e ALLOW_DESTRUCTIVE_SEED=true backend npm run seed
 ```
 
-## 4. Managed MongoDB/Redis With Compose
+## 5. Managed MongoDB/Redis With Compose
 
 If using Atlas/Upstash instead of the in-stack services:
 
@@ -115,7 +138,7 @@ Do not run `npm run seed` or phase verification scripts against Atlas unless the
 database is a disposable demo database and you intentionally pass the remote DB
 mutation override described in the script output.
 
-## 5. PaaS Deployment
+## 6. PaaS Deployment
 
 Backend on Render/Railway/Fly:
 
@@ -137,9 +160,9 @@ Frontend on Vercel/Netlify:
 
 After frontend is live, update backend `CORS_ORIGINS` to the exact frontend URL.
 
-## 6. Final Launch Checklist
+## 7. Final Launch Checklist
 
-- [ ] `docker compose -f docker-compose.prod.yml config` succeeds.
+- [ ] `docker compose -f docker-compose.prod.yml config --quiet` succeeds.
 - [ ] Backend starts with `NODE_ENV=production`.
 - [ ] `GET /api/health` returns `success: true`.
 - [ ] Frontend loads over HTTPS.
@@ -156,7 +179,7 @@ After frontend is live, update backend `CORS_ORIGINS` to the exact frontend URL.
 - [ ] `.env` files remain ignored/private.
 - [ ] Seed command was only run against a demo database.
 
-## 7. Verification Commands
+## 8. Verification Commands
 
 Local pre-deploy checks:
 
@@ -165,7 +188,7 @@ cd backend && npm run check
 npm run predeploy:check
 cd ../frontend && npm run lint && npm run build
 npm run predeploy:check
-cd .. && docker compose -f docker-compose.prod.yml config
+cd .. && docker compose -f docker-compose.prod.yml config --quiet
 ```
 
 Strict production gates, after real hosting env values are present:

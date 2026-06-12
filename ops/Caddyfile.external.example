@@ -1,0 +1,16 @@
+# Host-level Caddy example for HTTPS.
+# Use this when Caddy runs directly on the VPS, outside Docker.
+#
+# 1. Copy ops/compose.env.production.example to .env in the project root.
+# 2. Set FRONTEND_PORT=127.0.0.1:8080 in that root .env.
+# 3. Run: docker compose -f docker-compose.prod.yml up -d --build
+# 4. Install Caddy on the host and use this file as /etc/caddy/Caddyfile.
+
+yourdomain.com, www.yourdomain.com {
+  encode zstd gzip
+
+  reverse_proxy 127.0.0.1:8080 {
+    header_up X-Forwarded-Host {host}
+    header_up X-Forwarded-Proto {scheme}
+  }
+}
