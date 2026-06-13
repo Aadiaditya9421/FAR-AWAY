@@ -10,7 +10,14 @@ const BASE_LANGUAGES = ["javascript"];
 const JUDGE0_LANGUAGES = ["javascript", "python", "cpp", "java"];
 
 function enabledLanguages() {
-  return env.judge0Url ? JUDGE0_LANGUAGES : BASE_LANGUAGES;
+  return env.judge0Url || env.localCompilerEnabled || (env.pistonEnabled && env.pistonUrl) ? JUDGE0_LANGUAGES : BASE_LANGUAGES;
+}
+
+function compilerProvider() {
+  if (env.judge0Url) return "judge0";
+  if (env.localCompilerEnabled) return "local-compiler";
+  if (env.pistonEnabled && env.pistonUrl) return "piston";
+  return "local-js";
 }
 
 function starterCodeFor(language) {
@@ -21,6 +28,110 @@ function starterCodeFor(language) {
     java: "import java.io.*;\\nimport java.util.*;\\n\\npublic class Main {\\n    public static void main(String[] args) throws Exception {\\n        Scanner sc = new Scanner(System.in);\\n        List<String> data = new ArrayList<>();\\n        while (sc.hasNext()) data.add(sc.next());\\n        System.out.println(String.join(\" \", data));\\n    }\\n}",
   };
   return starters[language] || "";
+}
+
+const DEFAULT_PROBLEM_BANK = [
+  {
+    title: "Add Two Numbers",
+    slug: "add-two-numbers",
+    statement: "Read two integers from standard input and print their sum.",
+    difficulty: "easy",
+    tags: ["warmup", "math", "stdin"],
+    inputFormat: "Two integers a and b.",
+    outputFormat: "Print a single integer: a + b.",
+    constraints: ["-1000000000 <= a, b <= 1000000000"],
+    testCases: [
+      { name: "Sample 1", stdin: "2 3", expectedOutput: "5", isHidden: false },
+      { name: "Sample 2", stdin: "-5 8", expectedOutput: "3", isHidden: false },
+      { name: "Hidden 1", stdin: "1000000000 -1", expectedOutput: "999999999", isHidden: true },
+    ],
+  },
+  {
+    title: "Maximum in Array",
+    slug: "maximum-in-array",
+    statement: "Given n integers, print the maximum value in the array.",
+    difficulty: "easy",
+    tags: ["arrays", "loops"],
+    inputFormat: "First line contains n. Second line contains n integers.",
+    outputFormat: "Print the maximum integer.",
+    constraints: ["1 <= n <= 100000", "-1000000000 <= ai <= 1000000000"],
+    testCases: [
+      { name: "Sample 1", stdin: "5\n1 9 3 7 2", expectedOutput: "9", isHidden: false },
+      { name: "Sample 2", stdin: "4\n-8 -2 -10 -3", expectedOutput: "-2", isHidden: false },
+      { name: "Hidden 1", stdin: "1\n42", expectedOutput: "42", isHidden: true },
+    ],
+  },
+  {
+    title: "Count Vowels",
+    slug: "count-vowels",
+    statement: "Read a string and print how many vowels it contains. Count both uppercase and lowercase vowels.",
+    difficulty: "easy",
+    tags: ["strings"],
+    inputFormat: "One line containing a string.",
+    outputFormat: "Print the vowel count.",
+    constraints: ["1 <= length <= 100000"],
+    testCases: [
+      { name: "Sample 1", stdin: "Far Away", expectedOutput: "3", isHidden: false },
+      { name: "Sample 2", stdin: "BCDFG", expectedOutput: "0", isHidden: false },
+      { name: "Hidden 1", stdin: "Education", expectedOutput: "5", isHidden: true },
+    ],
+  },
+  {
+    title: "Valid Parentheses",
+    slug: "valid-parentheses",
+    statement: "Given a string containing only brackets (), {}, and [], print YES if it is balanced, otherwise print NO.",
+    difficulty: "medium",
+    tags: ["stack", "strings"],
+    inputFormat: "One bracket string.",
+    outputFormat: "Print YES or NO.",
+    constraints: ["1 <= length <= 100000"],
+    testCases: [
+      { name: "Sample 1", stdin: "{[()]}", expectedOutput: "YES", isHidden: false },
+      { name: "Sample 2", stdin: "{[(])}", expectedOutput: "NO", isHidden: false },
+      { name: "Hidden 1", stdin: "(((())))[]{}", expectedOutput: "YES", isHidden: true },
+    ],
+  },
+  {
+    title: "Fibonacci Number",
+    slug: "fibonacci-number",
+    statement: "Given n, print the nth Fibonacci number where F(0)=0 and F(1)=1.",
+    difficulty: "medium",
+    tags: ["dp", "math"],
+    inputFormat: "One integer n.",
+    outputFormat: "Print F(n).",
+    constraints: ["0 <= n <= 45"],
+    testCases: [
+      { name: "Sample 1", stdin: "7", expectedOutput: "13", isHidden: false },
+      { name: "Sample 2", stdin: "0", expectedOutput: "0", isHidden: false },
+      { name: "Hidden 1", stdin: "20", expectedOutput: "6765", isHidden: true },
+    ],
+  },
+];
+
+function withLanguageDefaults(problem) {
+  return {
+    ...problem,
+    supportedLanguages: JUDGE0_LANGUAGES,
+    starterCode: JUDGE0_LANGUAGES.map((language) => ({ language, code: starterCodeFor(language) })),
+    timeLimitMs: 2000,
+    memoryLimitMb: 128,
+    isActive: true,
+  };
+}
+
+async function ensureDefaultProblemBank() {
+  const activeCount = await Problem.countDocuments({ isActive: true });
+  if (activeCount > 0) return;
+
+  await Promise.all(
+    DEFAULT_PROBLEM_BANK.map((problem) =>
+      Problem.updateOne(
+        { slug: problem.slug },
+        { $setOnInsert: withLanguageDefaults(problem) },
+        { upsert: true },
+      ),
+    ),
+  );
 }
 
 function normalizeOutput(value = "") {
@@ -49,7 +160,7 @@ function publicProblem(problem) {
     runtimeLanguages,
     supportedLanguages,
     starterCode,
-    compilerProvider: env.judge0Url ? "judge0" : "local-js",
+    compilerProvider: compilerProvider(),
     totalTestCases: raw.testCases.length,
     testCases: raw.testCases
       .filter((testCase) => !testCase.isHidden)
@@ -82,6 +193,7 @@ function summarizeVerdict(results) {
 }
 
 export async function listProblems(query = {}) {
+  await ensureDefaultProblemBank();
   const filter = { isActive: true };
   if (query.difficulty) filter.difficulty = query.difficulty;
   if (query.tag) filter.tags = query.tag;
@@ -94,6 +206,7 @@ export async function listProblems(query = {}) {
 }
 
 export async function getProblem(id) {
+  await ensureDefaultProblemBank();
   const problem = await Problem.findById(id).select("-solutionCode");
   if (!problem || !problem.isActive) {
     throw new AppError("Problem not found", 404, ERROR_CODES.NOT_FOUND);

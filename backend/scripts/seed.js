@@ -29,6 +29,7 @@ import Analytics from "../models/Analytics.js";
 import QuestionBank from "../models/QuestionBank.js";
 import Problem from "../models/Problem.js";
 import CodingSubmission from "../models/CodingSubmission.js";
+import ClassroomGroup from "../models/ClassroomGroup.js";
 import { assertSafeDatabaseMutation } from "./databaseSafety.js";
 
 // ── Config ────────────────────────────────────────────────────────────────────
@@ -695,6 +696,7 @@ async function seed() {
     QuestionBank,
     Problem,
     CodingSubmission,
+    ClassroomGroup,
   ];
   for (const Model of collections) {
     await Model.deleteMany({});

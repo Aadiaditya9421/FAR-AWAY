@@ -24,6 +24,7 @@ export const createAssessmentValidator = [
     .withMessage("Invalid assignment mode"),
   body("assignment.batch").optional().trim().isLength({ max: 80 }).withMessage("batch must be at most 80 characters"),
   body("assignment.branch").optional().trim().isLength({ max: 80 }).withMessage("branch must be at most 80 characters"),
+  body("assignment.classroomId").optional({ nullable: true, checkFalsy: true }).isMongoId().withMessage("classroomId must be valid"),
   body("assignment.studentIds").optional().isArray().withMessage("studentIds must be an array"),
   body("assignment.studentIds.*").optional().isMongoId().withMessage("studentIds must contain valid ids"),
   body("assignment.sourceAssessmentId").optional({ nullable: true, checkFalsy: true }).isMongoId().withMessage("sourceAssessmentId must be valid"),
@@ -34,6 +35,14 @@ export const createAssessmentValidator = [
     }
     return true;
   }),
+];
+
+export const classroomValidator = [
+  body("name").trim().isLength({ min: 2, max: 120 }).withMessage("classroom name must be between 2 and 120 characters"),
+  body("batch").optional().trim().isLength({ max: 80 }).withMessage("batch must be at most 80 characters"),
+  body("branch").optional().trim().isLength({ max: 80 }).withMessage("branch must be at most 80 characters"),
+  body("studentIds").optional().isArray().withMessage("studentIds must be an array"),
+  body("studentIds.*").optional().isMongoId().withMessage("studentIds must contain valid ids"),
 ];
 
 export const submissionFeedbackValidator = [

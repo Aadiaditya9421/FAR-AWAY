@@ -39,6 +39,13 @@ function languageLabel(id) {
   return LANGUAGE_OPTIONS.find(item => item.id === id)?.label || id;
 }
 
+function compilerLabel(provider) {
+  if (provider === 'judge0') return 'Judge0';
+  if (provider === 'piston') return 'Piston';
+  if (provider === 'local-compiler') return 'Inbuilt';
+  return 'Local JS';
+}
+
 function getStarterCode(problem, language) {
   const fromProblem = problem?.starterCode?.find(item => item.language === language)?.code;
   if (fromProblem) return fromProblem;
@@ -504,7 +511,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="live">{activeProblem?.compilerProvider === 'judge0' ? 'Multi-language compiler' : 'Local JS compiler'}</Badge>
+          <Badge variant="live">{activeProblem?.compilerProvider === 'local-js' ? 'Local JS compiler' : `${compilerLabel(activeProblem?.compilerProvider)} compiler`}</Badge>
           {canManageProblems && <CreateProblemPanel onCreated={loadProblems} />}
         </div>
       </div>
@@ -519,7 +526,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           {[
             { label: 'Problems', value: problems.length },
-            { label: 'Runtime', value: activeProblem?.compilerProvider === 'judge0' ? 'Judge0' : 'Local JS' },
+            { label: 'Runtime', value: compilerLabel(activeProblem?.compilerProvider) },
             { label: 'Visible Cases', value: visibleTestCount },
             { label: 'Hidden Cases', value: hiddenTestCount },
           ].map(item => (
@@ -655,7 +662,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <p className="text-xs text-textMuted">
-                  {languageLabel(language)} - {activeProblem.compilerProvider === 'judge0' ? 'online judge' : 'local sandbox'}
+                  {languageLabel(language)} - {activeProblem.compilerProvider === 'local-js' ? 'local sandbox' : `${compilerLabel(activeProblem.compilerProvider)} online judge`}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button

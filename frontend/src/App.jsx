@@ -234,7 +234,7 @@ function formatClock(value) {
 function formatScheduleWindow(from, to) {
   const start = parseScheduleDate(from);
   const end = parseScheduleDate(to);
-  if (!start && !end) return 'Available anytime';
+  if (!start || !end) return 'Not scheduled by teacher yet';
   const day = new Intl.DateTimeFormat(undefined, {
     month: 'short',
     day: 'numeric',
@@ -1322,6 +1322,12 @@ export default function App() {
   });
 
   // Teacher actions
+  const refreshClassrooms = async () => {
+    const classroomsData = await AssessmentService.classrooms();
+    setClassrooms(classroomsData);
+    return classroomsData;
+  };
+
   const handleCreateTest = async (newTest, subjectId) => {
     try {
       const topic = newTest.topic
@@ -1637,6 +1643,7 @@ export default function App() {
               classrooms={classrooms}
               existingAssessments={liveAssessments}
               onCreateTest={handleCreateTest}
+              onClassroomsChanged={refreshClassrooms}
             />
           )}
         </main>

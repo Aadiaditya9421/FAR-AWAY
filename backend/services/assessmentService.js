@@ -1,4 +1,5 @@
 import Assessment from "../models/Assessment.js";
+import ClassroomGroup from "../models/ClassroomGroup.js";
 import Submission from "../models/Submission.js";
 import QuestionBank from "../models/QuestionBank.js";
 import User from "../models/User.js";
@@ -23,6 +24,7 @@ function getAvailabilityStatus(assessment, now = new Date()) {
   const availableFrom = assessment.availableFrom ? new Date(assessment.availableFrom) : null;
   const availableTo = assessment.availableTo ? new Date(assessment.availableTo) : null;
 
+  if (!availableFrom || !availableTo) return "unscheduled";
   if (availableFrom && now < availableFrom) return "upcoming";
   if (availableTo && now > availableTo) return "closed";
   return "open";
@@ -34,6 +36,8 @@ function isAssignedToStudent(assessment, user) {
 
   if (mode === "all") return true;
   if (mode === "class") {
+    const userId = user._id?.toString?.() || user.id?.toString?.();
+    if ((assignment.studentIds || []).some((studentId) => studentId.toString() === userId)) return true;
     return (
       normalizeClassValue(assignment.batch) === normalizeClassValue(user.batch)
       && normalizeClassValue(assignment.branch) === normalizeClassValue(user.branch)
@@ -45,6 +49,11 @@ function isAssignedToStudent(assessment, user) {
   }
 
   return true;
+}
+
+function canManageClassroom(classroom, user) {
+  if (user.role === "admin") return true;
+  return classroom.createdBy?.toString() === user._id.toString();
 }
 
 function assertCanViewAssessment(assessment, user) {
@@ -70,6 +79,9 @@ function assertCanStartAssessment(assessment, user) {
   if (status === "closed") {
     throw new AppError("This assessment window has closed", 403, ERROR_CODES.FORBIDDEN);
   }
+  if (status === "unscheduled") {
+    throw new AppError("This assessment is not scheduled by the teacher yet", 403, ERROR_CODES.FORBIDDEN);
+  }
 }
 
 async function getExistingStudentSubmission(assessmentId, userId) {
@@ -90,7 +102,7 @@ export async function assertAssessmentCanStart(assessment, user) {
   }
 }
 
-function studentAssignmentFilter(user) {
+function studentAssignmentFilter(user, classroomIds = []) {
   const clauses = [
     { "assignment.mode": { $exists: false } },
     { "assignment.mode": "all" },
@@ -103,6 +115,13 @@ function studentAssignmentFilter(user) {
     "assignment.batch": batch,
     "assignment.branch": branch,
   });
+
+  if (classroomIds.length) {
+    clauses.push({
+      "assignment.mode": "class",
+      "assignment.classroomId": { $in: classroomIds },
+    });
+  }
 
   clauses.push({
     "assignment.mode": { $in: ["students", "defaulters"] },
@@ -137,7 +156,8 @@ export async function listAssessments(query, user) {
   if (user?.role === "teacher") {
     filter.createdBy = user._id;
   } else if (user?.role === "student") {
-    Object.assign(filter, studentAssignmentFilter(user));
+    const classroomIds = await ClassroomGroup.find({ isActive: true, studentIds: user._id }).distinct("_id");
+    Object.assign(filter, studentAssignmentFilter(user, classroomIds));
   }
 
   const [items, total] = await Promise.all([
@@ -176,7 +196,11 @@ async function getAssignedStudents(assessment) {
   const mode = assignment.mode || "all";
 
   const filter = { role: "student" };
-  if (mode === "class") {
+  if (mode === "class" && assignment.classroomId) {
+    const classroom = await ClassroomGroup.findById(assignment.classroomId).select("studentIds");
+    if (!classroom) return [];
+    filter._id = { $in: classroom.studentIds || [] };
+  } else if (mode === "class") {
     filter.batch = normalizeClassValue(assignment.batch);
     filter.branch = normalizeClassValue(assignment.branch);
   } else if (mode === "students" || mode === "defaulters") {
@@ -193,9 +217,25 @@ async function buildAssignment(payload = {}, creator) {
     mode,
     batch: normalizeClassValue(incoming.batch),
     branch: normalizeClassValue(incoming.branch),
+    classroomId: incoming.classroomId || null,
+    classroomName: "",
     studentIds: incoming.studentIds || [],
     sourceAssessmentId: incoming.sourceAssessmentId || null,
   };
+
+  if (mode === "class" && assignment.classroomId) {
+    const classroom = await ClassroomGroup.findById(assignment.classroomId);
+    if (!classroom || !classroom.isActive) {
+      throw new AppError("Classroom group not found", 404, ERROR_CODES.NOT_FOUND);
+    }
+    if (!canManageClassroom(classroom, creator)) {
+      throw new AppError("You can only assign your own classroom groups", 403, ERROR_CODES.FORBIDDEN);
+    }
+    assignment.batch = classroom.batch;
+    assignment.branch = classroom.branch;
+    assignment.classroomName = classroom.name;
+    assignment.studentIds = classroom.studentIds || [];
+  }
 
   if (mode === "defaulters") {
     if (!assignment.sourceAssessmentId) {
@@ -218,7 +258,7 @@ async function buildAssignment(payload = {}, creator) {
     assignment.studentIds = assignedIds.filter((id) => !submittedSet.has(id.toString()));
   }
 
-  if (mode !== "students" && mode !== "defaulters") {
+  if (mode !== "students" && mode !== "defaulters" && !assignment.classroomId) {
     assignment.studentIds = [];
   }
 
@@ -238,10 +278,30 @@ export async function createAssessment(payload, creator) {
   });
 }
 
-export async function listClassrooms() {
+export async function listClassrooms(requester) {
   const students = await User.find({ role: "student" })
     .select("firstName lastName email batch branch")
     .sort({ branch: 1, batch: 1, firstName: 1 });
+
+  const classroomFilter = { isActive: true };
+  if (requester?.role === "teacher") classroomFilter.createdBy = requester._id;
+  const customClassrooms = await ClassroomGroup.find(classroomFilter)
+    .populate("studentIds", "firstName lastName email batch branch")
+    .sort({ updatedAt: -1 });
+
+  const customItems = customClassrooms.map((classroom) => ({
+    id: classroom._id.toString(),
+    _id: classroom._id,
+    name: classroom.name,
+    batch: classroom.batch,
+    branch: classroom.branch,
+    students: classroom.studentIds || [],
+    studentIds: (classroom.studentIds || []).map((student) => student._id || student),
+    studentCount: classroom.studentIds?.length || 0,
+    source: "custom",
+    editable: true,
+    createdBy: classroom.createdBy,
+  }));
 
   const groups = new Map();
   students.forEach((student) => {
@@ -258,6 +318,8 @@ export async function listClassrooms() {
         name: `${branchLabel} ${batchLabel}`,
         students: [],
         studentCount: 0,
+        source: "profile",
+        editable: false,
       });
     }
 
@@ -266,7 +328,48 @@ export async function listClassrooms() {
     group.studentCount = group.students.length;
   });
 
-  return [...groups.values()];
+  return [...customItems, ...groups.values()];
+}
+
+export async function createClassroom(payload, requester) {
+  const studentIds = payload.studentIds || [];
+  let resolvedStudentIds = studentIds;
+
+  if (!resolvedStudentIds.length && (payload.batch || payload.branch)) {
+    resolvedStudentIds = await User.find({
+      role: "student",
+      batch: normalizeClassValue(payload.batch),
+      branch: normalizeClassValue(payload.branch),
+    }).distinct("_id");
+  }
+
+  const classroom = await ClassroomGroup.create({
+    name: payload.name,
+    batch: normalizeClassValue(payload.batch),
+    branch: normalizeClassValue(payload.branch),
+    studentIds: resolvedStudentIds,
+    createdBy: requester._id,
+  });
+
+  return classroom.populate("studentIds", "firstName lastName email batch branch");
+}
+
+export async function updateClassroom(classroomId, payload, requester) {
+  const classroom = await ClassroomGroup.findById(classroomId);
+  if (!classroom || !classroom.isActive) {
+    throw new AppError("Classroom group not found", 404, ERROR_CODES.NOT_FOUND);
+  }
+  if (!canManageClassroom(classroom, requester)) {
+    throw new AppError("You do not have permission to edit this classroom", 403, ERROR_CODES.FORBIDDEN);
+  }
+
+  if (payload.name !== undefined) classroom.name = payload.name;
+  if (payload.batch !== undefined) classroom.batch = normalizeClassValue(payload.batch);
+  if (payload.branch !== undefined) classroom.branch = normalizeClassValue(payload.branch);
+  if (payload.studentIds !== undefined) classroom.studentIds = payload.studentIds;
+
+  await classroom.save();
+  return classroom.populate("studentIds", "firstName lastName email batch branch");
 }
 
 export async function getAssessmentAssignmentReport(assessmentId, requester) {

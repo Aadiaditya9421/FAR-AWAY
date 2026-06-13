@@ -119,11 +119,186 @@ function buildQuestions(selectedTopicObjects = []) {
   }));
 }
 
+function getStudentId(student) {
+  return String(student?._id || student?.id || student || '');
+}
+
+function uniqueStudentsFromClassrooms(classrooms = []) {
+  const byId = new Map();
+  classrooms.forEach(classroom => {
+    (classroom.students || []).forEach(student => {
+      const id = getStudentId(student);
+      if (id && !byId.has(id)) byId.set(id, student);
+    });
+  });
+  return [...byId.values()].sort((a, b) => {
+    const aName = [a.firstName, a.lastName].filter(Boolean).join(' ') || a.email || '';
+    const bName = [b.firstName, b.lastName].filter(Boolean).join(' ') || b.email || '';
+    return aName.localeCompare(bName);
+  });
+}
+
+function ClassroomManagerPanel({ classrooms = [], onChanged }) {
+  const [mode, setMode] = useState('create');
+  const [editingId, setEditingId] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [form, setForm] = useState({
+    name: '',
+    batch: '',
+    branch: '',
+    studentIds: [],
+  });
+
+  const allStudents = useMemo(() => uniqueStudentsFromClassrooms(classrooms), [classrooms]);
+  const editableClassrooms = classrooms.filter(classroom => classroom.editable);
+
+  const loadClassroom = (classroomId) => {
+    const classroom = editableClassrooms.find(item => getStudentId(item) === classroomId || item.id === classroomId);
+    if (!classroom) return;
+    setMode('edit');
+    setEditingId(classroom.id || classroom._id);
+    setForm({
+      name: classroom.name || '',
+      batch: classroom.batch || '',
+      branch: classroom.branch || '',
+      studentIds: (classroom.students || []).map(getStudentId).filter(Boolean),
+    });
+    setMessage('');
+  };
+
+  const resetCreate = () => {
+    setMode('create');
+    setEditingId('');
+    setForm({ name: '', batch: '', branch: '', studentIds: [] });
+    setMessage('');
+  };
+
+  const set = key => event => {
+    setForm(prev => ({ ...prev, [key]: event.target.value }));
+    setMessage('');
+  };
+
+  const toggleStudent = (studentId) => {
+    setForm(prev => {
+      const exists = prev.studentIds.includes(studentId);
+      return {
+        ...prev,
+        studentIds: exists
+          ? prev.studentIds.filter(id => id !== studentId)
+          : [...prev.studentIds, studentId],
+      };
+    });
+  };
+
+  const handleSave = async (event) => {
+    event.preventDefault();
+    if (!form.name.trim()) {
+      setMessage('Classroom name is required.');
+      return;
+    }
+
+    setSaving(true);
+    setMessage('');
+    try {
+      const payload = {
+        name: form.name.trim(),
+        batch: form.batch.trim(),
+        branch: form.branch.trim(),
+        studentIds: form.studentIds,
+      };
+      if (mode === 'edit' && editingId) {
+        await AssessmentService.updateClassroom(editingId, payload);
+        setMessage('Classroom updated.');
+      } else {
+        await AssessmentService.createClassroom(payload);
+        setMessage('Classroom created.');
+      }
+      await onChanged?.();
+      if (mode === 'create') resetCreate();
+    } catch (err) {
+      setMessage(err.message || 'Could not save classroom.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="card p-5 space-y-4">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <span className="label-caps">Teacher/Admin</span>
+          <h3 className="font-display font-semibold text-sm text-textPrimary mt-1">Classroom Groups</h3>
+        </div>
+        <Button variant="secondary" size="sm" onClick={resetCreate}>New</Button>
+      </div>
+
+      {editableClassrooms.length > 0 && (
+        <select
+          className="input h-[38px]"
+          value={editingId}
+          onChange={event => loadClassroom(event.target.value)}
+        >
+          <option value="">Edit existing custom group</option>
+          {editableClassrooms.map(classroom => (
+            <option key={classroom.id} value={classroom.id}>
+              {classroom.name} - {classroom.studentCount} students
+            </option>
+          ))}
+        </select>
+      )}
+
+      <form onSubmit={handleSave} className="space-y-3">
+        <input className="input h-[38px]" value={form.name} onChange={set('name')} placeholder="Classroom name" />
+        <div className="grid grid-cols-2 gap-2">
+          <input className="input h-[38px]" value={form.branch} onChange={set('branch')} placeholder="Branch" />
+          <input className="input h-[38px]" value={form.batch} onChange={set('batch')} placeholder="Batch" />
+        </div>
+
+        <div className="max-h-44 overflow-y-auto rounded-lg border border-borderColor bg-bgSecondary/30 p-2 space-y-1.5">
+          {allStudents.map(student => {
+            const id = getStudentId(student);
+            const checked = form.studentIds.includes(id);
+            const name = [student.firstName, student.lastName].filter(Boolean).join(' ') || student.email;
+            return (
+              <label key={id} className="flex items-center justify-between gap-2 p-2 rounded-md hover:bg-bgCard cursor-pointer">
+                <span className="min-w-0">
+                  <span className="block text-xs font-semibold text-textPrimary truncate">{name}</span>
+                  <span className="block text-[10px] text-textMuted truncate">{student.email}</span>
+                </span>
+                <input type="checkbox" checked={checked} onChange={() => toggleStudent(id)} />
+              </label>
+            );
+          })}
+          {allStudents.length === 0 && (
+            <p className="text-xs text-textMuted p-2">No student accounts found yet.</p>
+          )}
+        </div>
+
+        {message && (
+          <p className={`text-[11px] font-semibold ${message.includes('Could') || message.includes('required') ? 'text-accentCrimson' : 'text-accentEmerald'}`}>
+            {message}
+          </p>
+        )}
+
+        <Button type="submit" variant="primary" fullWidth disabled={saving || !form.name.trim()}>
+          {saving ? 'Saving...' : mode === 'edit' ? 'Update Classroom' : 'Create Classroom'}
+        </Button>
+      </form>
+
+      <p className="text-[10px] text-textMuted leading-relaxed">
+        Custom groups are editable. Profile groups from student batch/branch remain read-only.
+      </p>
+    </div>
+  );
+}
+
 export default function CreateTestView({
   subjects = [],
   classrooms = [],
   existingAssessments = [],
   onCreateTest,
+  onClassroomsChanged,
 }) {
   const subjectOptions = useMemo(() => normalizeSubjectOptions(subjects), [subjects]);
   const [selectedSubId, setSelectedSubId] = useState(subjectOptions[0]?.id || 'sub-oops');
@@ -189,6 +364,7 @@ export default function CreateTestView({
       mode: 'class',
       batch: selectedClassroom?.batch || '',
       branch: selectedClassroom?.branch || '',
+      classroomId: selectedClassroom?.source === 'custom' ? (selectedClassroom._id || selectedClassroom.id) : null,
     };
   };
 
@@ -521,6 +697,8 @@ export default function CreateTestView({
               </div>
             )}
           </div>
+
+          <ClassroomManagerPanel classrooms={classrooms} onChanged={onClassroomsChanged} />
 
           <div className="card p-5 space-y-3">
             <div className="flex items-center gap-2">

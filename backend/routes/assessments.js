@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  createClassroomRecord,
   createAssessmentRecord,
   getAssignmentReport,
   getAssessmentDetails,
@@ -10,6 +11,7 @@ import {
   recordIntegrityEventRecord,
   saveSubmissionFeedback,
   submitAssessmentRecord,
+  updateClassroomRecord,
 } from "../controllers/assessmentController.js";
 import { authenticate } from "../middleware/authMiddleware.js";
 import { normalizeProctoringEvent } from "../middleware/proctoring.js";
@@ -17,6 +19,7 @@ import { authorizeRoles } from "../middleware/roleMiddleware.js";
 import { validateRequest } from "../middleware/validateRequest.js";
 import {
   createAssessmentValidator,
+  classroomValidator,
   integrityEventValidator,
   submissionFeedbackValidator,
   submitAssessmentValidator,
@@ -31,6 +34,8 @@ router.use(authenticate);
 router.get("/", paginationValidator, validateRequest, asyncHandler(getAssessments));
 router.post("/", authorizeRoles("teacher", "admin"), createAssessmentValidator, validateRequest, asyncHandler(createAssessmentRecord));
 router.get("/classrooms", authorizeRoles("teacher", "admin"), asyncHandler(getClassrooms));
+router.post("/classrooms", authorizeRoles("teacher", "admin"), classroomValidator, validateRequest, asyncHandler(createClassroomRecord));
+router.put("/classrooms/:id", authorizeRoles("teacher", "admin"), mongoIdParam("id"), classroomValidator, validateRequest, asyncHandler(updateClassroomRecord));
 router.get("/submissions", authorizeRoles("teacher", "admin"), paginationValidator, validateRequest, asyncHandler(getReviewSubmissions));
 router.put(
   "/submissions/:id/feedback",

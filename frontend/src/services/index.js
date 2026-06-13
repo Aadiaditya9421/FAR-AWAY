@@ -48,6 +48,8 @@ export async function logoutRequest() {
 export const AssessmentService = {
   list: (query = '') => api.get(`/assessments${query}`, { auth: true }),
   classrooms: () => api.get('/assessments/classrooms', { auth: true }),
+  createClassroom: (payload) => api.post('/assessments/classrooms', payload, { auth: true }),
+  updateClassroom: (id, payload) => api.put(`/assessments/classrooms/${id}`, payload, { auth: true }),
   submissions: (query = '') => api.get(`/assessments/submissions${query}`, { auth: true }),
   details: (id) => api.get(`/assessments/${id}`, { auth: true }),
   assignmentReport: (id) => api.get(`/assessments/${id}/assignment-report`, { auth: true }),

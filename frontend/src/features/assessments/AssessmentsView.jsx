@@ -30,6 +30,7 @@ function getWindowStatus(item = {}) {
   const now = new Date();
   const start = parseWindowValue(item.availableFrom);
   const end = parseWindowValue(item.availableTo);
+  if (!start || !end) return 'unscheduled';
   if (start && now < start) return 'upcoming';
   if (end && now > end) return 'closed';
   return 'open';
@@ -59,7 +60,7 @@ function formatScheduleLabel(item = {}) {
   if (item.scheduleLabel) return item.scheduleLabel;
   const start = parseWindowValue(item.availableFrom);
   const end = parseWindowValue(item.availableTo);
-  if (!start && !end) return 'Available anytime';
+  if (!start || !end) return 'Not scheduled by teacher yet';
   const day = new Intl.DateTimeFormat(undefined, {
     month: 'short',
     day: 'numeric',
@@ -107,6 +108,7 @@ function AssessmentRow({ assessment, onStart, subjectColor }) {
   const isCompleted = assessment.hasSubmitted || assessment.submissionStatus === 'completed';
   const isLocked = isCompleted || windowStatus !== 'open';
   const isClosed = windowStatus === 'closed';
+  const isUnscheduled = windowStatus === 'unscheduled';
   const timeLeft = windowStatus === 'upcoming' ? formatTimeLeft(assessment.availableFrom) : null;
 
   return (
@@ -183,6 +185,11 @@ function AssessmentRow({ assessment, onStart, subjectColor }) {
             </span>
           ) : isClosed ? (
             <span className="badge-closed text-[11px] block text-center sm:inline-block">Closed</span>
+          ) : isUnscheduled ? (
+            <span className="badge-upcoming text-[11px] flex items-center justify-center sm:justify-start gap-1.5">
+              <IconClock size={11} />
+              Not scheduled
+            </span>
           ) : isLocked ? (
             <span className="badge-upcoming text-[11px] flex items-center justify-center sm:justify-start gap-1.5">
               <IconClock size={11} />
@@ -255,7 +262,7 @@ function LearningPathsPanel({ subjects, onStart }) {
                 ].join(' ')}
                 style={canStart ? { background: subject.accentColor, borderColor: subject.accentColor } : undefined}
               >
-                {canStart ? 'Start Path' : firstAssessment ? completedCount === subject.assessments.length ? 'Completed' : 'Scheduled' : 'No Tests'}
+                {canStart ? 'Start Path' : firstAssessment ? completedCount === subject.assessments.length ? 'Completed' : 'No open tests' : 'No Tests'}
               </button>
             </div>
           );
@@ -277,6 +284,7 @@ function SubjectSection({ subject, onStart, searchQuery }) {
 
   const openCount = filtered.filter(item => getWindowStatus(item) === 'open' && !item.hasSubmitted).length;
   const upcomingCount = filtered.filter(item => getWindowStatus(item) === 'upcoming').length;
+  const unscheduledCount = filtered.filter(item => getWindowStatus(item) === 'unscheduled').length;
   const completedCount = filtered.filter(item => item.hasSubmitted).length;
 
   return (
@@ -317,6 +325,12 @@ function SubjectSection({ subject, onStart, searchQuery }) {
             <span className="badge-upcoming flex items-center gap-1.5">
               <IconClock size={11} />
               {upcomingCount} Upcoming
+            </span>
+          )}
+          {unscheduledCount > 0 && (
+            <span className="badge-upcoming flex items-center gap-1.5">
+              <IconClock size={11} />
+              {unscheduledCount} Not Scheduled
             </span>
           )}
           <span className="text-[11px] text-textMuted flex items-center gap-1.5">

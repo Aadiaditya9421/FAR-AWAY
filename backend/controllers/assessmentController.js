@@ -1,6 +1,7 @@
 import {
   assertAssessmentCanStart,
   createAssessment,
+  createClassroom,
   getAssessmentAssignmentReport,
   getAssessmentById,
   listAssignedStudentsForAssessment,
@@ -8,6 +9,7 @@ import {
   listSubmissionsForReview,
   listAssessments,
   submitAssessment,
+  updateClassroom,
   updateSubmissionFeedback,
 } from "../services/assessmentService.js";
 import { recordIntegrityEvent } from "../services/integrityService.js";
@@ -65,8 +67,28 @@ export async function createAssessmentRecord(req, res) {
 }
 
 export async function getClassrooms(req, res) {
-  const classrooms = await listClassrooms();
+  const classrooms = await listClassrooms(req.user);
   return sendSuccess(res, { message: "Classrooms retrieved", data: classrooms });
+}
+
+export async function createClassroomRecord(req, res) {
+  const classroom = await createClassroom(req.body, req.user);
+  emitAppDataChanged({
+    scope: "classrooms",
+    source: "classroom:created",
+    entityId: classroom._id,
+  });
+  return sendCreated(res, { message: "Classroom created", data: classroom });
+}
+
+export async function updateClassroomRecord(req, res) {
+  const classroom = await updateClassroom(req.params.id, req.body, req.user);
+  emitAppDataChanged({
+    scope: "classrooms",
+    source: "classroom:updated",
+    entityId: classroom._id,
+  });
+  return sendSuccess(res, { message: "Classroom updated", data: classroom });
 }
 
 export async function getAssignmentReport(req, res) {

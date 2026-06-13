@@ -4,6 +4,9 @@ FROM node:20-alpine
 ENV NODE_ENV=production
 WORKDIR /app
 
+# Inbuilt coding arena compiler toolchain for JavaScript, Python, C++, and Java.
+RUN apk add --no-cache python3 g++ openjdk17-jdk
+
 # Install only production dependencies, reproducibly, from the lockfile.
 COPY package*.json ./
 RUN npm ci --omit=dev

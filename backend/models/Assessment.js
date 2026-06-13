@@ -143,6 +143,17 @@ const assessmentSchema = new mongoose.Schema(
         trim: true,
         index: true,
       },
+      classroomId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "ClassroomGroup",
+        default: null,
+        index: true,
+      },
+      classroomName: {
+        type: String,
+        default: "",
+        trim: true,
+      },
       studentIds: {
         type: [{
           type: mongoose.Schema.Types.ObjectId,
