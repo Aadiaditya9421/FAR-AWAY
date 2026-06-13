@@ -6,6 +6,7 @@ import React, { useState, useEffect } from 'react';
 
 // ── Auth ──
 import { useAuth } from './context/AuthContext';
+import LandingPage from './features/auth/LandingPage';
 import AuthPage   from './features/auth/AuthPage';
 import AuthModal  from './features/auth/AuthModal';
 
@@ -108,6 +109,9 @@ export default function App() {
 
   // Auth page tab: 'login' | 'register' (used when modal redirects to AuthPage)
   const [authView, setAuthView] = useState('login');
+
+  // Whether to show landing page or auth form when not logged in
+  const [showLanding, setShowLanding] = useState(true);
 
   // When guest tries a gated action
   const [authModal, setAuthModal] = useState({ open: false });
@@ -413,6 +417,9 @@ export default function App() {
   // Show auth page if:
   // - user is NOT logged in AND hasn't chosen guest mode
   if (!isLoggedIn && !guestMode) {
+    if (showLanding) {
+      return <LandingPage onGetStarted={() => setShowLanding(false)} />;
+    }
     return <AuthPage onGuestBrowse={() => setGuestMode(true)} initialTab={authView} />;
   }
 
@@ -429,7 +436,7 @@ export default function App() {
         user={user}
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
-        onLogin={() => { setGuestMode(false); setAuthView('login'); }}
+        onLogin={() => { setGuestMode(false); setShowLanding(false); setAuthView('login'); }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         hasUnread={hasUnread}
