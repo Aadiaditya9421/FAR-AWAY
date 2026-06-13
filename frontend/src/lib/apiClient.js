@@ -48,11 +48,23 @@ async function rawRequest(path, { method = 'GET', body, auth = false, token } = 
   const access = token || (auth ? getAccessToken() : null);
   if (access) headers.Authorization = `Bearer ${access}`;
 
-  const res = await fetch(`${API_BASE}${path}`, {
-    method,
-    headers,
-    body: body != null ? JSON.stringify(body) : undefined,
-  });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method,
+      headers,
+      body: body != null ? JSON.stringify(body) : undefined,
+    });
+  } catch (err) {
+    throw new ApiError(
+      'Cannot connect to the Far Away server. Check that the backend is online and VITE_API_URL points to the deployed API.',
+      {
+        status: 0,
+        code: 'NETWORK_ERROR',
+        details: [err?.message || 'Network request failed'],
+      },
+    );
+  }
 
   let json = null;
   try {

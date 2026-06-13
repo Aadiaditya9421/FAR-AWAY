@@ -4,6 +4,7 @@ import path from "node:path";
 const args = new Set(process.argv.slice(2));
 const strict = args.has("--strict") || process.env.PREDEPLOY_STRICT === "true";
 const requireGoogle = args.has("--require-google") || process.env.REQUIRE_GOOGLE_AUTH === "true";
+const probeApi = args.has("--probe-api") || process.env.PREDEPLOY_PROBE_API === "true";
 const root = process.cwd();
 
 const blockers = [];
@@ -54,8 +55,12 @@ function addBlocker(message) {
   blockers.push(message);
 }
 
+function getApiUrl() {
+  return value("VITE_API_URL");
+}
+
 function checkApiUrl() {
-  const apiUrl = value("VITE_API_URL");
+  const apiUrl = getApiUrl();
   if (!apiUrl) {
     addBlocker("VITE_API_URL is missing.");
     return;
@@ -96,6 +101,38 @@ function checkApiUrl() {
   }
 }
 
+async function probeApiHealth() {
+  if (!probeApi) return;
+
+  const apiUrl = getApiUrl();
+  if (!apiUrl || hasPlaceholder(apiUrl) || apiUrl.startsWith("/")) return;
+
+  const healthUrl = `${apiUrl.replace(/\/+$/, "")}/health`;
+  let controller;
+  let timeout;
+
+  if (typeof AbortController !== "undefined") {
+    controller = new AbortController();
+    timeout = setTimeout(() => controller.abort(), 10000);
+  }
+
+  try {
+    const response = await fetch(healthUrl, { signal: controller?.signal });
+    if (!response.ok) {
+      const message = `VITE_API_URL health probe returned HTTP ${response.status}: ${healthUrl}`;
+      strict ? addBlocker(message) : addWarn(message);
+      return;
+    }
+
+    addPass("VITE_API_URL health probe responded successfully.");
+  } catch (error) {
+    const message = `VITE_API_URL health probe failed: ${healthUrl} (${error.message})`;
+    strict ? addBlocker(message) : addWarn(message);
+  } finally {
+    if (timeout) clearTimeout(timeout);
+  }
+}
+
 function checkGoogleClient() {
   const clientId = value("VITE_GOOGLE_CLIENT_ID");
   if (!clientId) {
@@ -118,18 +155,26 @@ function printSection(label, items) {
   for (const item of items) console.log(`- ${item}`);
 }
 
-checkApiUrl();
-checkGoogleClient();
+async function main() {
+  checkApiUrl();
+  checkGoogleClient();
+  await probeApiHealth();
 
-console.log("Far Away frontend predeploy check");
-console.log(`Mode: ${strict ? "strict" : "report-only"}`);
-printSection("Passes", passes);
-printSection("Warnings", warnings);
-printSection("Blockers", blockers);
+  console.log("Far Away frontend predeploy check");
+  console.log(`Mode: ${strict ? "strict" : "report-only"}`);
+  printSection("Passes", passes);
+  printSection("Warnings", warnings);
+  printSection("Blockers", blockers);
 
-if (blockers.length) {
-  console.log(`\nResult: ${strict ? "failed" : "report has blockers"}`);
-  process.exit(strict ? 1 : 0);
+  if (blockers.length) {
+    console.log(`\nResult: ${strict ? "failed" : "report has blockers"}`);
+    process.exit(strict ? 1 : 0);
+  }
+
+  console.log("\nResult: passed");
 }
 
-console.log("\nResult: passed");
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});

@@ -57,6 +57,11 @@ curl https://your-railway-backend.up.railway.app/api/health
 
 Expected: `success: true`.
 
+If the browser shows `Failed to fetch` or `Cannot connect to the Far Away
+server`, first verify that the Railway public domain resolves and the health
+URL above works. A Vercel frontend cannot call a localhost API or a deleted /
+unpublished Railway domain.
+
 ## 3. Deploy Frontend On Vercel
 
 In Vercel:
@@ -72,6 +77,13 @@ In Vercel:
    - `VITE_API_URL=https://your-railway-backend.up.railway.app/api`
    - `VITE_GOOGLE_CLIENT_ID=your-google-oauth-web-client-id.apps.googleusercontent.com`
 4. Deploy.
+
+Before redeploying, you can check that the API URL is reachable:
+
+```bash
+cd frontend
+VITE_API_URL=https://your-railway-backend.up.railway.app/api npm run predeploy:check -- --probe-api
+```
 
 After deployment, copy the final Vercel production URL.
 
