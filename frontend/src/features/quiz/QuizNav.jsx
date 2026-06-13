@@ -1,5 +1,4 @@
 // src/features/quiz/QuizNav.jsx
-import React from 'react';
 
 export default function QuizNav({ questions, currentIndex, answers, flagged, onJump }) {
   return (
@@ -11,7 +10,7 @@ export default function QuizNav({ questions, currentIndex, answers, flagged, onJ
         Jump to any question. Green = answered, Orange = flagged.
       </p>
 
-      <div className="grid grid-cols-4 gap-2 mb-5">
+      <div className="grid grid-cols-6 sm:grid-cols-4 gap-2 mb-5">
         {questions.map((q, idx) => {
           const isAnswered = !!answers[q.id];
           const isFlagged  = !!flagged[q.id];

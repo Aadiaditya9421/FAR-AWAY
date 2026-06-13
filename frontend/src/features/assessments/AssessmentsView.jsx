@@ -2,9 +2,9 @@
 // ─── Subject-Grouped Assessment View ───
 // Shows labs grouped by teacher/subject, each with a time window gate.
 
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 import {
-  IconClock, IconCheck, IconBook, IconCode,
+  IconClock, IconBook, IconCode,
   IconDatabase, IconGlobe, IconServer, IconAtom,
   IconTarget, IconChevronRight, IconCoin,
 } from '../../components/ui/Icons';
@@ -60,7 +60,7 @@ function AssessmentRow({ assessment, windowStatus, onStart, subjectColor }) {
     <div
       onClick={() => !isLocked && onStart(assessment)}
       className={[
-        'flex items-center justify-between gap-4 px-5 py-4 rounded-xl border transition-all duration-150',
+        'flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-5 py-4 rounded-xl border transition-all duration-150',
         isLocked
           ? 'bg-bgPrimary border-borderColor opacity-70 cursor-not-allowed'
           : 'bg-bgCard border-borderColor hover:border-borderHover hover:shadow-card cursor-pointer group',
@@ -84,6 +84,11 @@ function AssessmentRow({ assessment, windowStatus, onStart, subjectColor }) {
             <Badge variant={DIFF_BADGE[assessment.difficulty]}>
               {assessment.difficulty}
             </Badge>
+            {assessment.isAdaptive && (
+              <Badge className="bg-accentIndigo/10 text-accentIndigo border border-accentIndigo/20 font-semibold">
+                Personalized
+              </Badge>
+            )}
           </div>
           <p className="text-[12px] text-textMuted leading-snug line-clamp-1">
             {assessment.desc}
@@ -92,9 +97,9 @@ function AssessmentRow({ assessment, windowStatus, onStart, subjectColor }) {
       </div>
 
       {/* Right: meta + action */}
-      <div className="flex items-center gap-5 flex-shrink-0">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-5 w-full sm:w-auto border-t border-borderColor/40 sm:border-0 pt-3 sm:pt-0 mt-1 sm:mt-0 flex-shrink-0">
         {/* Meta */}
-        <div className="hidden sm:flex items-center gap-4 text-[12px] text-textMuted">
+        <div className="flex flex-wrap items-center gap-4 text-[12px] text-textMuted">
           <span className="flex items-center gap-1.5">
             <IconClock size={12} />
             {assessment.duration} min
@@ -110,23 +115,25 @@ function AssessmentRow({ assessment, windowStatus, onStart, subjectColor }) {
         </div>
 
         {/* Action */}
-        {isClosed ? (
-          <span className="badge-closed text-[11px]">Closed</span>
-        ) : isLocked ? (
-          <span className="badge-upcoming text-[11px] flex items-center gap-1.5">
-            <IconClock size={11} />
-            Upcoming
-          </span>
-        ) : (
-          <button
-            onClick={e => { e.stopPropagation(); onStart(assessment); }}
-            className="btn-primary btn-sm gap-1.5"
-            style={{ background: subjectColor, borderColor: subjectColor }}
-          >
-            Start Test
-            <IconChevronRight size={13} />
-          </button>
-        )}
+        <div className="w-full sm:w-auto">
+          {isClosed ? (
+            <span className="badge-closed text-[11px] block text-center sm:inline-block">Closed</span>
+          ) : isLocked ? (
+            <span className="badge-upcoming text-[11px] flex items-center justify-center sm:justify-start gap-1.5">
+              <IconClock size={11} />
+              Upcoming
+            </span>
+          ) : (
+            <button
+              onClick={e => { e.stopPropagation(); onStart(assessment); }}
+              className="btn-primary btn-sm gap-1.5 w-full sm:w-auto justify-center"
+              style={{ background: subjectColor, borderColor: subjectColor }}
+            >
+              Start Test
+              <IconChevronRight size={13} />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -150,7 +157,7 @@ function SubjectSection({ subject, onStart, searchQuery }) {
   return (
     <section className="mb-8">
       {/* ── Subject header ── */}
-      <div className="flex items-start justify-between mb-4">
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4 mb-4">
         <div className="flex items-center gap-4">
           {/* Subject icon badge */}
           <div
@@ -173,7 +180,7 @@ function SubjectSection({ subject, onStart, searchQuery }) {
         </div>
 
         {/* Window status badge + time */}
-        <div className="flex flex-col items-end gap-1.5">
+        <div className="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-1.5 flex-wrap">
           {windowStatus === 'open' && (
             <span className="badge-open flex items-center gap-1.5">
               <span className="live-dot w-1.5 h-1.5" />

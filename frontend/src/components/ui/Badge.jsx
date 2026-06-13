@@ -1,5 +1,4 @@
 // src/components/ui/Badge.jsx
-import React from 'react';
 
 /**
  * Badge — pill label for difficulty, status, skill level

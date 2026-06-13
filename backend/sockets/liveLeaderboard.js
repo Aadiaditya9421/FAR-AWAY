@@ -1,4 +1,6 @@
 import { SOCKET_EVENTS } from "../utils/socketEvents.js";
+import { logger } from "../config/logger.js";
+import { authenticateSocket } from "./socketAuth.js";
 
 /**
  * Attach the leaderboard namespace to the Socket.io server.
@@ -7,6 +9,7 @@ import { SOCKET_EVENTS } from "../utils/socketEvents.js";
  */
 export function attachLeaderboardSocket(io) {
   const ns = io.of("/leaderboard");
+  ns.use(authenticateSocket);
 
   ns.on("connection", (socket) => {
     socket.on("subscribe", (topic) => {
@@ -26,7 +29,7 @@ export function attachLeaderboardSocket(io) {
     });
   });
 
-  console.log("Leaderboard socket namespace attached");
+  logger.info("Leaderboard socket namespace attached");
 }
 
 /**

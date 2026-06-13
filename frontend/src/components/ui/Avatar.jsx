@@ -1,5 +1,4 @@
 // src/components/ui/Avatar.jsx
-import React from 'react';
 import { AVATAR_COLORS } from '../../data/mockData';
 
 /**

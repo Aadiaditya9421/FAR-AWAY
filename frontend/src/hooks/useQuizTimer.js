@@ -25,6 +25,7 @@ export default function useQuizTimer(isRunning, onTick, onExpire) {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally re-subscribe only when isRunning toggles; onTick/onExpire are stable
   }, [isRunning]);
 
   const stop = () => {

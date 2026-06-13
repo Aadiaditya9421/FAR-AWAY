@@ -3,16 +3,41 @@
 // Enables faculty to inspect students' test submissions, see correct/incorrect answers,
 // and write/generate personalized AI study notes.
 
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import Avatar from '../../components/ui/Avatar';
-import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import {
   IconCheck, IconX, IconUser, IconBook,
   IconTrophy, IconClock, IconFlame, Spinner,
 } from '../../components/ui/Icons';
 
-export default function ClassProgressView({ submissions, onSaveFeedback, searchQuery }) {
+function buildLocalStudyNote(selectedAttempt) {
+  const wrongQs = selectedAttempt.questions.filter(q => !q.isCorrect);
+
+  if (wrongQs.length === 0) {
+    return `Hi ${selectedAttempt.studentName.split(' ')[0]},
+
+Fantastic job on completing the ${selectedAttempt.testTitle}! You achieved a perfect score of 100%. Your understanding of these concepts is exemplary. For next steps, I recommend exploring advanced topics or acting as a peer mentor in SkillSwap to help others solidify their understanding.
+
+Keep up the great work!`;
+  }
+
+  const topicsToReview = wrongQs.map((q, idx) => `${idx + 1}. ${q.text.slice(0, 40)}...`).join('\n');
+  return `Hi ${selectedAttempt.studentName.split(' ')[0]},
+
+Good effort on completing the ${selectedAttempt.testTitle}. Your overall score is ${selectedAttempt.score}%.
+
+I reviewed your responses and noticed we can improve on a couple of points:
+${topicsToReview}
+
+Study Tips:
+- Review our textbook section regarding these specific issues.
+- Try booking a 30-minute mentoring session in the SkillSwap panel with classmates who excel in this area.
+
+Let me know if you want to schedule a brief call during office hours to go over the solutions together. You are close to mastering this!`;
+}
+
+export default function ClassProgressView({ submissions, onSaveFeedback, onGenerateStudyNote, searchQuery }) {
   const [selectedSubId, setSelectedSubId] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
@@ -36,43 +61,31 @@ export default function ClassProgressView({ submissions, onSaveFeedback, searchQ
     setFeedbackText(attempt.feedback || '');
   };
 
-  // Generate personalized study notes with AI simulation
-  const handleGenerateAINote = () => {
+  // Generate personalized study notes with the backend tutor when available.
+  const handleGenerateAINote = async () => {
     if (!selectedAttempt) return;
     setAiGenerating(true);
+    setAiStep('Asking AI tutor to inspect this attempt...');
 
-    const steps = [
-      'Scanning student response vectors...',
-      'Mapping conceptual gaps on syllabus branches...',
-      'Generating custom study tips and resources...',
-    ];
-
-    let currentStep = 0;
-    setAiStep(steps[0]);
-
-    const interval = setInterval(() => {
-      currentStep++;
-      if (currentStep < steps.length) {
-        setAiStep(steps[currentStep]);
-      } else {
-        clearInterval(interval);
-        
-        // AI Note synthesis based on student's score and wrong answers
-        const wrongQs = selectedAttempt.questions.filter(q => !q.isCorrect);
-        let note = '';
-        
-        if (wrongQs.length === 0) {
-          note = `Hi ${selectedAttempt.studentName.split(' ')[0]},\n\nFantastic job on completing the ${selectedAttempt.testTitle}! You achieved a perfect score of 100%. Your understanding of these concepts is exemplary. For next steps, I recommend exploring advanced topics or acting as a peer mentor in SkillSwap to help others solidify their understanding.\n\nKeep up the great work!`;
-        } else {
-          const topicsToReview = wrongQs.map((q, idx) => `${idx + 1}. ${q.text.slice(0, 40)}...`).join('\n');
-          note = `Hi ${selectedAttempt.studentName.split(' ')[0]},\n\nGood effort on completing the ${selectedAttempt.testTitle}. Your overall score is ${selectedAttempt.score}%. \n\nI reviewed your responses and noticed we can improve on a couple of points:\n${topicsToReview}\n\nStudy Tips:\n- Review our textbook section regarding these specific issues.\n- Try booking a 30-minute mentoring session in the SkillSwap panel with classmates who excel in this area.\n\nLet me know if you want to schedule a brief call during office hours to go over the solutions together. You are close to mastering this!`;
+    try {
+      if (onGenerateStudyNote) {
+        const note = await onGenerateStudyNote(selectedAttempt.id);
+        if (note) {
+          setFeedbackText(note);
+          return;
         }
-
-        setFeedbackText(note);
-        setAiGenerating(false);
-        setAiStep('');
       }
-    }, 850);
+
+      setAiStep('Generating a local draft from the attempt data...');
+      setFeedbackText(buildLocalStudyNote(selectedAttempt));
+    } catch (err) {
+      console.error('Failed to generate AI study note:', err);
+      setAiStep('Generating a local draft from the attempt data...');
+      setFeedbackText(buildLocalStudyNote(selectedAttempt));
+    } finally {
+      setAiGenerating(false);
+      setAiStep('');
+    }
   };
 
   const handleSendFeedback = () => {
@@ -222,7 +235,7 @@ export default function ClassProgressView({ submissions, onSaveFeedback, searchQ
         {/* Right Side: Feedback Detail Drawer */}
         <div className="lg:col-span-1">
           {selectedAttempt ? (
-            <div className="card p-5 border-borderColor space-y-5 bg-bgCard sticky top-24">
+            <div className="card p-5 border-borderColor space-y-5 bg-bgCard relative lg:sticky lg:top-24">
               {/* Header info */}
               <div className="border-b border-borderColor pb-3 flex items-start justify-between">
                 <div>

@@ -1,5 +1,4 @@
 // src/features/assessments/AssessmentCard.jsx
-import React from 'react';
 import Badge from '../../components/ui/Badge';
 
 const TOPIC_ICONS = {

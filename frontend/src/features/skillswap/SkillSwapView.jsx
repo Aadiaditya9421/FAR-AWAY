@@ -1,5 +1,5 @@
 // src/features/skillswap/SkillSwapView.jsx
-import React, { useState } from 'react';
+import { useState } from 'react';
 import PeerCard from './PeerCard';
 import RequestCard from './RequestCard';
 import PostSwapModal from './PostSwapModal';
@@ -25,6 +25,16 @@ export default function SkillSwapView({
            m.give.toLowerCase().includes(q) ||
            m.take.toLowerCase().includes(q);
   });
+  const filteredRecommended = (skillSwap.recommended || []).filter(m => {
+    if (!searchQuery) return true;
+    const q = searchQuery.toLowerCase();
+    return m.name.toLowerCase().includes(q) ||
+           m.give.toLowerCase().includes(q) ||
+           m.take.toLowerCase().includes(q) ||
+           m.targetTopic?.toLowerCase().includes(q);
+  });
+  const recommendedIds = new Set(filteredRecommended.map(m => m.id));
+  const suggestedMatches = filteredMatches.filter(m => !recommendedIds.has(m.id));
 
   const pendingRequests = skillSwap.requests.filter(r => r.status === 'pending').length;
   const myPostings = skillSwap.myPostings || [];
@@ -33,7 +43,7 @@ export default function SkillSwapView({
     <div className="animate-fadeIn">
 
       {/* ── Header ── */}
-      <div className="flex items-start justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
           <h3 className="font-display font-bold text-2xl text-textPrimary tracking-tight">
             SkillSwap Peer Network
@@ -45,7 +55,7 @@ export default function SkillSwapView({
         {/* CTA */}
         <button
           onClick={() => setShowPostModal(true)}
-          className="btn-primary flex-shrink-0 gap-1.5"
+          className="btn-primary w-full sm:w-auto flex-shrink-0 gap-1.5"
           style={{ height: '38px', padding: '0 16px', borderRadius: '8px' }}
         >
           <IconPlus size={14} />
@@ -111,23 +121,42 @@ export default function SkillSwapView({
       )}
 
       {/* ── Main grid ── */}
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Left: Peer Matches */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
+          {filteredRecommended.length > 0 && (
+            <div className="mb-7">
+              <div className="flex items-center gap-2 mb-3">
+                <IconUser size={15} className="text-accentAmber" />
+                <h4 className="font-display font-semibold text-sm text-textPrimary">
+                  Recommended Mentors
+                  <span className="text-[10px] font-normal text-textMuted ml-1.5">
+                    ranked by your weak topics
+                  </span>
+                </h4>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredRecommended.map(peer => (
+                  <PeerCard key={peer.id} peer={peer} onRequest={onRequestSwap} />
+                ))}
+              </div>
+            </div>
+          )}
+
           <div className="flex items-center gap-2 mb-3">
             <IconSearch size={15} className="text-textSecondary" />
             <h4 className="font-display font-semibold text-sm text-textPrimary">
               Suggested Matches
               <span className="text-[10px] font-normal text-textMuted ml-1.5">
-                ({filteredMatches.length} available)
+                ({suggestedMatches.length} available)
               </span>
             </h4>
           </div>
 
-          {filteredMatches.length > 0 ? (
+          {suggestedMatches.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {filteredMatches.map(peer => (
+              {suggestedMatches.map(peer => (
                 <PeerCard key={peer.id} peer={peer} onRequest={onRequestSwap} />
               ))}
             </div>

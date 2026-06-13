@@ -1,36 +1,64 @@
 import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
 import { env } from "../config/env.js";
+import { getRedisClient } from "../config/redis.js";
+import { logger } from "../config/logger.js";
+import { authenticateSocket } from "./socketAuth.js";
 import { SOCKET_EVENTS } from "../utils/socketEvents.js";
 
 let io;
+let socketAdapterSubscriber;
+
+async function attachRedisAdapter() {
+  if (!env.redisEnabled) return;
+
+  const pubClient = getRedisClient();
+  if (!pubClient?.isOpen) {
+    logger.warn("Socket.io Redis adapter skipped because Redis is not connected.");
+    return;
+  }
+
+  socketAdapterSubscriber = pubClient.duplicate();
+  await socketAdapterSubscriber.connect();
+  io.adapter(createAdapter(pubClient, socketAdapterSubscriber));
+  logger.info("Socket.io Redis adapter attached");
+}
 
 /**
  * Initialise a Socket.io server attached to the given HTTP server.
  * Returns the io instance so other socket modules can attach namespaces.
  */
-export function initializeSockets(httpServer) {
+export async function initializeSockets(httpServer) {
   io = new Server(httpServer, {
     cors: {
-      origin: env.clientUrl,
+      origin: env.corsOrigins,
       methods: ["GET", "POST"],
       credentials: true,
     },
   });
 
+  await attachRedisAdapter();
+
+  io.use(authenticateSocket);
+
   // Default namespace — lightweight notification channel.
   io.on("connection", (socket) => {
-    const userId = socket.handshake.query.userId;
-    if (userId) {
-      socket.join(`user:${userId}`);
-    }
+    socket.join(`user:${socket.user.id}`);
 
     socket.on("disconnect", () => {
       // Clean-up handled automatically by Socket.io rooms.
     });
   });
 
-  console.log("Socket.io initialised");
+  logger.info("Socket.io initialised");
   return io;
+}
+
+export async function closeSocketAdapter() {
+  if (socketAdapterSubscriber?.isOpen) {
+    await socketAdapterSubscriber.quit();
+  }
+  socketAdapterSubscriber = null;
 }
 
 /**

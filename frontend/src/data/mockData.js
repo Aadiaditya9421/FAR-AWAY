@@ -166,34 +166,6 @@ export const ASSESSMENTS = SUBJECTS.flatMap(s =>
   s.assessments.map(a => ({ ...a, subjectId: s.id, subjectName: s.shortName }))
 );
 
-export const LEADERBOARDS = {
-  DSA: [
-    { name: "Alice Wu",         score: 98, xp: 1420, coins: 400, badge: "Expert",       avatar: "AW" },
-    { name: "Michael Chen",     score: 89, xp: 950,  coins: 180, badge: "Intermediate", avatar: "MC" },
-    { name: "John Doe",         score: 85, xp: 820,  coins: 120, badge: "Intermediate", avatar: "JD" },
-    { name: "Clara Rodriguez",  score: 82, xp: 750,  coins: 100, badge: "Intermediate", avatar: "CR" },
-    { name: "Dave K.",          score: 76, xp: 620,  coins: 80,  badge: "Beginner",     avatar: "DK" },
-  ],
-  WebDev: [
-    { name: "Sarah Lin",    score: 99, xp: 1510, coins: 420, badge: "Expert",       avatar: "SL" },
-    { name: "Michael Chen", score: 92, xp: 1100, coins: 210, badge: "Expert",       avatar: "MC" },
-    { name: "Alex Kim",     score: 85, xp: 820,  coins: 150, badge: "Intermediate", avatar: "AK" },
-    { name: "John Doe",     score: 79, xp: 710,  coins: 90,  badge: "Intermediate", avatar: "JD" },
-  ],
-  Backend: [
-    { name: "Dave K.",         score: 96, xp: 1390, coins: 380, badge: "Expert",       avatar: "DK" },
-    { name: "Alice Wu",        score: 91, xp: 1200, coins: 250, badge: "Expert",       avatar: "AW" },
-    { name: "Clara Rodriguez", score: 84, xp: 900,  coins: 170, badge: "Intermediate", avatar: "CR" },
-    { name: "John Doe",        score: 75, xp: 600,  coins: 80,  badge: "Beginner",     avatar: "JD" },
-  ],
-  React: [
-    { name: "Sarah Lin",   score: 98, xp: 1490, coins: 410, badge: "Expert",       avatar: "SL" },
-    { name: "Priya Patel", score: 94, xp: 1300, coins: 300, badge: "Expert",       avatar: "PP" },
-    { name: "John Doe",    score: 88, xp: 920,  coins: 190, badge: "Intermediate", avatar: "JD" },
-    { name: "Alex Kim",    score: 82, xp: 780,  coins: 110, badge: "Intermediate", avatar: "AK" },
-  ],
-};
-
 export const INITIAL_SKILLSWAP = {
   matches: [
     { id: "peer-1", name: "Sarah Lin",    give: "React (Expert)",    take: "DSA Fundamentals",    bio: "Excels in modern hooks and Tailwind components. Needs help with graphs.", avatar: "SL", matched: false },

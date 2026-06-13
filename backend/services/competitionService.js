@@ -3,73 +3,78 @@ import { debitCoins } from "./coinService.js";
 import { ERROR_CODES } from "../utils/errorCodes.js";
 import { buildPaginationMeta, parsePagination } from "../utils/helpers.js";
 import { AppError } from "../utils/responseHandler.js";
-import { buildKey, cacheDelete, cacheDeleteByPrefix, withCache, CACHE_TTL } from "../utils/cache.js";
 
 export async function listCompetitions(query) {
   const { page, limit, skip } = parsePagination(query);
-  const cacheKey = buildKey("competitions:list", {
-    page,
-    limit,
-    status: query.status,
-    topic: query.topic,
-  });
+  const filter = {};
+  if (query.status) filter.status = query.status;
+  if (query.topic) filter.topic = query.topic;
 
-  return withCache(cacheKey, CACHE_TTL.competitionList, async () => {
-    const filter = {};
-    if (query.status) filter.status = query.status;
-    if (query.topic) filter.topic = query.topic;
+  const [items, total] = await Promise.all([
+    Competition.find(filter).sort({ startDate: 1 }).skip(skip).limit(limit),
+    Competition.countDocuments(filter),
+  ]);
 
-    const [items, total] = await Promise.all([
-      Competition.find(filter).sort({ startDate: 1 }).skip(skip).limit(limit),
-      Competition.countDocuments(filter),
-    ]);
-
-    return { items, meta: buildPaginationMeta(total, page, limit) };
-  });
+  return { items, meta: buildPaginationMeta(total, page, limit) };
 }
 
 export async function createCompetition(payload, userId) {
-  const competition = await Competition.create({ ...payload, createdBy: userId });
-  await cacheDeleteByPrefix("competitions:list");
-  return competition;
+  return Competition.create({ ...payload, createdBy: userId });
 }
 
 export async function getCompetition(id) {
-  return withCache(`competition:${id}`, CACHE_TTL.competition, async () => {
-    const competition = await Competition.findById(id).populate("participants", "firstName lastName email");
-    if (!competition) throw new AppError("Competition not found", 404, ERROR_CODES.NOT_FOUND);
-    return competition;
-  });
+  const competition = await Competition.findById(id).populate("participants", "firstName lastName email");
+  if (!competition) throw new AppError("Competition not found", 404, ERROR_CODES.NOT_FOUND);
+  return competition;
 }
 
 export async function joinCompetition(id, userId, payload = {}) {
   const competition = await Competition.findById(id);
   if (!competition) throw new AppError("Competition not found", 404, ERROR_CODES.NOT_FOUND);
 
-  const alreadyJoined = competition.participants.some((participantId) => participantId.toString() === userId.toString());
-  if (alreadyJoined) {
+  const teamName = payload.teamName || `Team ${competition.teams.length + 1}`;
+  const teamMembers = payload.teamMembers?.length ? payload.teamMembers : [userId];
+  const update = {
+    $addToSet: { participants: userId },
+  };
+
+  if (competition.type === "group") {
+    update.$push = {
+      teams: {
+        teamName,
+        members: teamMembers,
+        score: 0,
+      },
+    };
+  }
+
+  const joinedCompetition = await Competition.findOneAndUpdate(
+    {
+      _id: id,
+      participants: { $ne: userId },
+    },
+    update,
+    { new: true },
+  );
+
+  if (!joinedCompetition) {
     throw new AppError("User already joined this competition", 409, ERROR_CODES.CONFLICT);
   }
 
-  if (competition.entryFee > 0) {
-    await debitCoins(userId, competition.entryFee, `Joined competition: ${competition.title}`, "competition", competition._id);
+  try {
+    if (competition.entryFee > 0) {
+      await debitCoins(userId, competition.entryFee, `Joined competition: ${competition.title}`, "competition", competition._id);
+    }
+  } catch (error) {
+    const rollback = { $pull: { participants: userId } };
+    if (competition.type === "group") {
+      rollback.$pull.teams = { teamName, members: userId };
+    }
+    await Competition.updateOne({ _id: id }, rollback);
+    throw error;
   }
 
-  competition.participants.push(userId);
-
-  if (competition.type === "group") {
-    competition.teams.push({
-      teamName: payload.teamName || `Team ${competition.teams.length + 1}`,
-      members: payload.teamMembers?.length ? payload.teamMembers : [userId],
-      score: 0,
-    });
-  }
-
-  await competition.save();
-  // Participant/team changes invalidate this competition and any listing.
-  await cacheDelete(`competition:${id}`);
-  await cacheDeleteByPrefix("competitions:list");
-  return competition;
+  return joinedCompetition;
 }
 
 export async function getCompetitionStandings(id) {

@@ -1,4 +1,6 @@
 import { SOCKET_EVENTS } from "../utils/socketEvents.js";
+import { logger } from "../config/logger.js";
+import { authenticateSocket } from "./socketAuth.js";
 
 /**
  * Attach the competition namespace to the Socket.io server.
@@ -7,6 +9,7 @@ import { SOCKET_EVENTS } from "../utils/socketEvents.js";
  */
 export function attachCompetitionSocket(io) {
   const ns = io.of("/competition");
+  ns.use(authenticateSocket);
 
   ns.on("connection", (socket) => {
     socket.on("join", (competitionId) => {
@@ -27,7 +30,7 @@ export function attachCompetitionSocket(io) {
     });
   });
 
-  console.log("Competition socket namespace attached");
+  logger.info("Competition socket namespace attached");
 }
 
 /**

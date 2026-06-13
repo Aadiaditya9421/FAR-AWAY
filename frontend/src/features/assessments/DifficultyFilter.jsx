@@ -1,5 +1,4 @@
 // src/features/assessments/DifficultyFilter.jsx
-import React from 'react';
 
 const LEVELS = ['all', 'easy', 'medium', 'hard'];
 const ICONS  = { all: '🎯', easy: '🟢', medium: '🟡', hard: '🔴' };

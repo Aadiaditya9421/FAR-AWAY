@@ -39,6 +39,7 @@ async function run() {
     ["/coins/transactions", auth],
     ["/skillswap/requests", auth],
     ["/analytics/progress", auth],
+    ["/problems", auth],
   ];
 
   for (const [path, headers] of checks) {

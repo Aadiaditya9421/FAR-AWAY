@@ -1,5 +1,4 @@
 // src/features/competitions/CompetitionCard.jsx
-import React from 'react';
 import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { IconCoin, IconCheck, IconClock, IconZap } from '../../components/ui/Icons';
@@ -46,7 +45,7 @@ export default function CompetitionCard({ comp, onRegister, userCoins }) {
         </p>
 
         {/* Stats row */}
-        <div className="grid grid-cols-2 gap-2 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
           {[
             { label: 'Time',         value: comp.time,         color: comp.status === 'live' ? 'text-accentEmerald' : 'text-textSecondary' },
             { label: 'Participants', value: comp.participants,  color: 'text-textSecondary' },

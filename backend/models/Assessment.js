@@ -72,6 +72,38 @@ const assessmentSchema = new mongoose.Schema(
       type: [questionSchema],
       default: [],
     },
+    questionConfig: {
+      isDynamic: {
+        type: Boolean,
+        default: false,
+      },
+      isAdaptive: {
+        type: Boolean,
+        default: false,
+      },
+      count: {
+        type: Number,
+        default: 5,
+      },
+      preventRepeat: {
+        type: Boolean,
+        default: true,
+      },
+      difficultyRange: {
+        min: {
+          type: Number,
+          default: 1,
+          min: 1,
+          max: 5,
+        },
+        max: {
+          type: Number,
+          default: 5,
+          min: 1,
+          max: 5,
+        },
+      },
+    },
     coinsReward: {
       type: Number,
       default: 20,

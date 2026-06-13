@@ -2,7 +2,7 @@
 // ─── Far Away — Post a Skill Swap Request ───
 // A focused modal for the user to advertise what they can teach + want to learn.
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { IconArrowsSwap, IconX } from '../../components/ui/Icons';
 
 const SKILL_SUGGESTIONS = [
@@ -73,11 +73,11 @@ export default function PostSwapModal({ isOpen, onClose, onSubmit }) {
   return (
     <div
       className="fixed inset-0 z-[200] flex items-center justify-center animate-overlay-in"
-      style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur-8px)' }}
+      style={{ background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(8px)' }}
       onClick={handleOverlayClick}
     >
       <div
-        className="relative w-full max-w-lg mx-4 bg-bgCard border border-borderColor rounded-xl animate-modal-in overflow-hidden shadow-glass"
+        className="relative w-full max-w-lg mx-4 bg-bgCard border border-borderColor rounded-xl animate-modal-in max-h-[90vh] overflow-y-auto shadow-glass"
       >
         {/* ── Header ── */}
         <div className="flex items-center justify-between px-6 py-5 border-b border-borderColor">

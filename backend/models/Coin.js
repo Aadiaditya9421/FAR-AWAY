@@ -29,7 +29,7 @@ const coinSchema = new mongoose.Schema(
     },
     referenceType: {
       type: String,
-      enum: ["assessment", "competition", "manual", "skillswap"],
+      enum: ["assessment", "competition", "manual", "skillswap", "daily_bonus"],
       default: "manual",
     },
     referenceId: {

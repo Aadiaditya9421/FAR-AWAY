@@ -1,7 +1,6 @@
 import LeaderBoard from "../models/LeaderBoard.js";
 import User from "../models/User.js";
 import { buildPaginationMeta, parsePagination } from "../utils/helpers.js";
-import { buildKey, cacheDeleteByPrefix, withCache, CACHE_TTL } from "../utils/cache.js";
 
 function badgeFromScore(score) {
   if (score >= 90) return "Expert";
@@ -38,37 +37,40 @@ export async function updateLeaderboardForSubmission({ userId, topic, score, coi
   );
 
   await recalculateTopicRanks(topic);
-  // Ranks for the whole topic (and any user's rankings) may have shifted.
-  await cacheDeleteByPrefix("leaderboard:");
+
+  try {
+    const { getIO } = await import("../sockets/notificationSocket.js");
+    const { emitLeaderboardUpdate } = await import("../sockets/liveLeaderboard.js");
+    const io = getIO();
+    const { items } = await getTopicLeaderboard(topic, { page: 1, limit: 10 });
+    emitLeaderboardUpdate(io, topic, { items });
+  } catch (err) {
+    // Ignore if Socket.io is not initialized or fail-safe
+  }
+
   return entry;
 }
 
 export async function getTopicLeaderboard(topic, query) {
   const { page, limit, skip } = parsePagination(query);
-  const cacheKey = buildKey(`leaderboard:topic:${topic}`, { page, limit });
+  const filter = { topic };
+  const [items, total] = await Promise.all([
+    LeaderBoard.find(filter)
+      .populate("userId", "firstName lastName email profilePicture")
+      .sort({ rank: 1, score: -1 })
+      .skip(skip)
+      .limit(limit),
+    LeaderBoard.countDocuments(filter),
+  ]);
 
-  return withCache(cacheKey, CACHE_TTL.leaderboard, async () => {
-    const filter = { topic };
-    const [items, total] = await Promise.all([
-      LeaderBoard.find(filter)
-        .populate("userId", "firstName lastName email profilePicture")
-        .sort({ rank: 1, score: -1 })
-        .skip(skip)
-        .limit(limit),
-      LeaderBoard.countDocuments(filter),
-    ]);
-
-    return { items, meta: buildPaginationMeta(total, page, limit) };
-  });
+  return { items, meta: buildPaginationMeta(total, page, limit) };
 }
 
 export async function getUserRankings(userId) {
-  return withCache(`leaderboard:user:${userId}`, CACHE_TTL.leaderboard, async () => {
-    const [user, rankings] = await Promise.all([
-      User.findById(userId).select("firstName lastName email coinsBalance totalCoinsEarned"),
-      LeaderBoard.find({ userId }).sort({ topic: 1 }),
-    ]);
+  const [user, rankings] = await Promise.all([
+    User.findById(userId).select("firstName lastName email coinsBalance totalCoinsEarned"),
+    LeaderBoard.find({ userId }).sort({ topic: 1 }),
+  ]);
 
-    return { user, rankings };
-  });
+  return { user, rankings };
 }
