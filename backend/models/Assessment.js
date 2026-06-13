@@ -52,6 +52,11 @@ const assessmentSchema = new mongoose.Schema(
       trim: true,
       index: true,
     },
+    description: {
+      type: String,
+      default: "",
+      trim: true,
+    },
     difficulty: {
       type: String,
       enum: ["easy", "medium", "hard"],
@@ -108,6 +113,48 @@ const assessmentSchema = new mongoose.Schema(
       type: Number,
       default: 20,
       min: 0,
+    },
+    availableFrom: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    availableTo: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+    assignment: {
+      mode: {
+        type: String,
+        enum: ["all", "class", "students", "defaulters"],
+        default: "all",
+        index: true,
+      },
+      batch: {
+        type: String,
+        default: "",
+        trim: true,
+        index: true,
+      },
+      branch: {
+        type: String,
+        default: "",
+        trim: true,
+        index: true,
+      },
+      studentIds: {
+        type: [{
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        }],
+        default: [],
+      },
+      sourceAssessmentId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Assessment",
+        default: null,
+      },
     },
     isActive: {
       type: Boolean,

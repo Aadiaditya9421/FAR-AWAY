@@ -72,6 +72,8 @@ const STUDENT_APP_TABS = new Set([
 const TEACHER_APP_TABS = new Set([
   'class-progress',
   'create-test',
+  'coding',
+  'leaderboard',
 ]);
 
 const INITIAL_SUBMISSIONS = [
@@ -214,6 +216,34 @@ const SUBJECT_MAP = {
   }
 };
 
+function parseScheduleDate(value) {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatClock(value) {
+  const date = parseScheduleDate(value);
+  if (!date) return '';
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+}
+
+function formatScheduleWindow(from, to) {
+  const start = parseScheduleDate(from);
+  const end = parseScheduleDate(to);
+  if (!start && !end) return 'Available anytime';
+  const day = new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric',
+  }).format(start || end);
+  if (start && end) return `${day} · ${formatClock(start)} - ${formatClock(end)}`;
+  if (start) return `${day} · opens ${formatClock(start)}`;
+  return `${day} · closes ${formatClock(end)}`;
+}
+
 function groupAssessmentsIntoSubjects(assessmentsList = []) {
   const grouped = {};
   assessmentsList.forEach(a => {
@@ -238,16 +268,27 @@ function groupAssessmentsIntoSubjects(assessmentsList = []) {
       duration: a.duration,
       coinsReward: a.coinsReward,
       questions,
+      questionCount: a.totalQuestions || questions.length || a.questionConfig?.count || 0,
       isAdaptive: a.questionConfig?.isAdaptive || false,
       isDynamic: a.questionConfig?.isDynamic || false,
+      availableFrom: a.availableFrom || null,
+      availableTo: a.availableTo || null,
+      availabilityStatus: a.availabilityStatus || 'open',
+      scheduleLabel: formatScheduleWindow(a.availableFrom, a.availableTo),
+      assignment: a.assignment || { mode: 'all' },
     });
   });
 
   return Object.keys(SUBJECT_MAP).map(topicKey => {
     const subInfo = SUBJECT_MAP[topicKey];
+    const assessments = grouped[topicKey] || [];
+    const nextScheduled = assessments.find(item => item.availableFrom || item.availableTo);
     return {
       ...subInfo,
-      assessments: grouped[topicKey] || [],
+      scheduleLabel: nextScheduled?.scheduleLabel || subInfo.scheduleLabel,
+      availableFrom: nextScheduled?.availableFrom || subInfo.availableFrom,
+      availableTo: nextScheduled?.availableTo || subInfo.availableTo,
+      assessments,
     };
   }).filter(s => s.assessments.length > 0);
 }
@@ -567,6 +608,9 @@ function mapTeacherSubmissions(submissionsList = []) {
       testId: assessment._id || assessment.id || submission.assessmentId,
       testTitle: assessment.title || 'Assessment',
       subjectName: assessment.topic ? `${assessment.topic} Lab` : 'Assessment',
+      batch: submission.userId?.batch || '',
+      branch: submission.userId?.branch || '',
+      classLabel: [submission.userId?.branch, submission.userId?.batch].filter(Boolean).join(' ') || 'Unassigned',
       score: submission.score || 0,
       correctCount: submission.correctCount || 0,
       totalCount,
@@ -632,6 +676,7 @@ export default function App() {
   // Subjects, submissions and feedback state
   const [subjects, setSubjects]                   = useState([]);
   const [submissions, setSubmissions]             = useState(INITIAL_SUBMISSIONS);
+  const [classrooms, setClassrooms]               = useState([]);
   const [competitions, setCompetitions]           = useState([]);
   const [skillSwap, setSkillSwap]                 = useState(EMPTY_SKILLSWAP_STATE);
   const [progress, setProgress]                   = useState([]);
@@ -702,6 +747,7 @@ export default function App() {
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clear guest/demo data before authenticated API responses arrive
       setSubjects([]);
       setSubmissions([]);
+      setClassrooms([]);
       setCompetitions([]);
       setSkillSwap(EMPTY_SKILLSWAP_STATE);
       setProgress([]);
@@ -727,13 +773,15 @@ export default function App() {
           const role = authUser.role || 'student';
 
           if (role === 'teacher' || role === 'admin') {
-            const [assessmentsData, submissionsData] = await Promise.all([
+            const [assessmentsData, submissionsData, classroomsData] = await Promise.all([
               AssessmentService.list(),
               AssessmentService.submissions(),
+              AssessmentService.classrooms(),
             ]);
 
             setSubjects(groupAssessmentsIntoSubjects(assessmentsData));
             setSubmissions(mapTeacherSubmissions(submissionsData));
+            setClassrooms(classroomsData);
             setCompetitions([]);
             setSkillSwap(EMPTY_SKILLSWAP_STATE);
             setProgress([]);
@@ -795,6 +843,7 @@ export default function App() {
           setCompetitions([]);
           setSkillSwap(EMPTY_SKILLSWAP_STATE);
           setSubmissions([]);
+          setClassrooms([]);
           setProgress([]);
           setInsights(null);
           setPracticeSet(null);
@@ -867,6 +916,7 @@ export default function App() {
       setCompetitions(INITIAL_COMPETITIONS);
       setSkillSwap(INITIAL_SKILLSWAP);
       setSubmissions(INITIAL_SUBMISSIONS);
+      setClassrooms([]);
       setInsights(null);
       setPracticeSet(null);
       setAppDataLoading(false);
@@ -1265,32 +1315,43 @@ export default function App() {
   // Teacher actions
   const handleCreateTest = async (newTest, subjectId) => {
     try {
-      const topic = SUBJECT_MAP[Object.keys(SUBJECT_MAP).find(k => SUBJECT_MAP[k].id === subjectId)]?.shortName.split(' ')[0] || 'OOPs';
+      const topic = newTest.topic
+        || SUBJECT_MAP[Object.keys(SUBJECT_MAP).find(k => SUBJECT_MAP[k].id === subjectId)]?.shortName.split(' ')[0]
+        || 'OOPs';
       
       const questions = newTest.questions.map(q => ({
-        type: q.type,
-        title: q.text,
+        type: q.type || 'mcq',
+        title: q.title || q.text,
+        description: q.description || '',
         options: q.options,
-        correctAnswer: q.correct,
-        points: 1,
+        correctAnswer: q.correctAnswer || q.correct,
+        points: q.points || 1,
       }));
 
       await AssessmentService.create({
         title: newTest.title,
+        description: newTest.description || newTest.desc || '',
         topic,
         difficulty: newTest.difficulty,
         duration: newTest.duration,
         coinsReward: newTest.coinsReward || 20,
+        availableFrom: newTest.availableFrom || null,
+        availableTo: newTest.availableTo || null,
+        assignment: newTest.assignment || { mode: 'all' },
         questions,
       });
 
-      const assessmentsData = await AssessmentService.list();
+      const [assessmentsData, classroomsData] = await Promise.all([
+        AssessmentService.list(),
+        AssessmentService.classrooms().catch(() => classrooms),
+      ]);
       setSubjects(groupAssessmentsIntoSubjects(assessmentsData));
+      setClassrooms(classroomsData);
 
-      showToast('Adaptive test created and published successfully!', 'success');
+      showToast('Assessment scheduled and assigned successfully!', 'success');
     } catch (err) {
       console.error('Failed to create assessment:', err);
-      showToast('Failed to create test on server.', 'error');
+      showToast(err.message || 'Failed to create test on server.', 'error');
     }
   };
 
@@ -1480,6 +1541,7 @@ export default function App() {
               dataLoading={appDataLoading}
               dataError={appDataError}
               isLiveData={isLoggedIn}
+              isPreview={!isLoggedIn}
               onStartQuiz={handleStartQuiz}
               onGoToAssessments={() => handleTabChange('assessments')}
               onGoToCoding={() => handleTabChange('coding')}
@@ -1522,12 +1584,14 @@ export default function App() {
               onRegister={handleRegisterComp}
               userCoins={user.coins}
               searchQuery={searchQuery}
+              isPreview={!isLoggedIn}
             />
           )}
 
           {activeTab === 'coding' && (
             <CodingPracticeView
               isLoggedIn={isLoggedIn}
+              userRole={user.role}
               onRequireAuth={() => setAuthModal({ open: true })}
             />
           )}
@@ -1551,6 +1615,7 @@ export default function App() {
           {activeTab === 'class-progress' && (
             <ClassProgressView
               submissions={submissions}
+              classrooms={classrooms}
               onSaveFeedback={handleSaveFeedback}
               onGenerateStudyNote={handleGenerateStudyNote}
               searchQuery={searchQuery}
@@ -1560,6 +1625,8 @@ export default function App() {
           {activeTab === 'create-test' && (
             <CreateTestView
               subjects={subjects}
+              classrooms={classrooms}
+              existingAssessments={liveAssessments}
               onCreateTest={handleCreateTest}
             />
           )}

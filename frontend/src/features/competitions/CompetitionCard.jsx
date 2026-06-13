@@ -9,9 +9,9 @@ const STATUS_CONFIG = {
   completed: { bg: 'border-borderColor bg-transparent',          color: 'text-textMuted' },
 };
 
-export default function CompetitionCard({ comp, onRegister, userCoins }) {
+export default function CompetitionCard({ comp, onRegister, userCoins, isPreview = false }) {
   const cfg = STATUS_CONFIG[comp.status] || STATUS_CONFIG.completed;
-  const canAfford = userCoins >= comp.fee;
+  const canAfford = !isPreview && userCoins >= comp.fee;
 
   return (
     <div className={`card p-5 flex flex-col justify-between border ${cfg.bg} relative overflow-hidden`}>
@@ -36,21 +36,21 @@ export default function CompetitionCard({ comp, onRegister, userCoins }) {
 
         {/* Title */}
         <h4 className="font-display font-semibold text-sm text-textPrimary mb-2 leading-snug">
-          {comp.title}
+          {isPreview ? 'Arena details locked' : comp.title}
         </h4>
 
         {/* Description */}
         <p className="text-[11px] text-textMuted leading-relaxed mb-4">
-          {comp.desc}
+          {isPreview ? 'Sign in to view the live topic, rules, fee, prize pool, and current entries.' : comp.desc}
         </p>
 
         {/* Stats row */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
           {[
             { label: 'Time',         value: comp.time,         color: comp.status === 'live' ? 'text-accentEmerald' : 'text-textSecondary' },
-            { label: 'Participants', value: comp.participants,  color: 'text-textSecondary' },
-            { label: 'Entry Fee',    value: comp.fee,          icon: <IconCoin size={11} />, color: 'text-accentAmber' },
-            { label: 'Prize Pool',   value: comp.pool,         icon: <IconCoin size={11} />, color: 'text-accentAmber font-bold' },
+            { label: 'Participants', value: isPreview ? 'Hidden' : comp.participants,  color: 'text-textSecondary' },
+            { label: 'Entry Fee',    value: isPreview ? '--' : comp.fee,          icon: <IconCoin size={11} />, color: 'text-accentAmber' },
+            { label: 'Prize Pool',   value: isPreview ? 'Locked' : comp.pool,         icon: <IconCoin size={11} />, color: 'text-accentAmber font-bold' },
           ].map(s => (
             <div key={s.label} className="p-2.5 rounded-md bg-bgSecondary/50 border border-borderColor flex flex-col justify-between">
               <div className="flex items-center gap-1">
@@ -74,9 +74,9 @@ export default function CompetitionCard({ comp, onRegister, userCoins }) {
             variant={canAfford ? 'primary' : 'ghost'}
             fullWidth
             onClick={() => onRegister(comp.id)}
-            disabled={!canAfford}
+            disabled={!isPreview && !canAfford}
           >
-            {canAfford ? `Enter Arena — Pay ${comp.fee} coins` : `Need ${comp.fee - userCoins} more coins`}
+            {isPreview ? 'Sign in for Arena Entry' : canAfford ? `Enter Arena - Pay ${comp.fee} coins` : `Need ${comp.fee - userCoins} more coins`}
           </Button>
         )
       )}

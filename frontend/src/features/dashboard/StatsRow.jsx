@@ -2,7 +2,7 @@
 import StatCard from '../../components/ui/StatCard';
 import { IconFlame, IconCoin, IconGlobe, IconZap } from '../../components/ui/Icons';
 
-export default function StatsRow({ user, onCoinClick }) {
+export default function StatsRow({ user, onCoinClick, isPreview = false }) {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
       <StatCard
@@ -21,16 +21,17 @@ export default function StatsRow({ user, onCoinClick }) {
       />
       <StatCard
         label="Global Rank"
-        value={`#${user.rank}`}
+        value={isPreview ? 'Hidden' : `#${user.rank || 0}`}
         icon={<IconGlobe size={18} className="text-accentIndigo" />}
         accent="indigo"
+        sublabel={isPreview ? 'Sign in' : 'Live rank'}
       />
       <StatCard
         label="Total XP"
-        value={`${user.xp} XP`}
+        value={isPreview ? 'Hidden' : `${user.xp || 0} XP`}
         icon={<IconZap size={18} className="text-accentViolet" />}
         accent="violet"
-        sublabel={`Level ${user.level}`}
+        sublabel={isPreview ? 'Sign in' : `Level ${user.level || 1}`}
       />
     </div>
   );

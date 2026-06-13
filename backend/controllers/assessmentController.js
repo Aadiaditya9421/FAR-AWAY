@@ -1,6 +1,10 @@
 import {
+  assertAssessmentCanStart,
   createAssessment,
+  getAssessmentAssignmentReport,
   getAssessmentById,
+  listAssignedStudentsForAssessment,
+  listClassrooms,
   listSubmissionsForReview,
   listAssessments,
   submitAssessment,
@@ -8,21 +12,22 @@ import {
 } from "../services/assessmentService.js";
 import { recordIntegrityEvent } from "../services/integrityService.js";
 import { selectQuestionsForAttempt } from "../services/questionSelectionService.js";
-import { emitAppDataChanged, emitUserDataChanged } from "../sockets/notificationSocket.js";
+import { emitAppDataChanged, emitUserDataChanged, emitUsersDataChanged } from "../sockets/notificationSocket.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
 
 export async function getAssessments(req, res) {
-  const { items, meta } = await listAssessments(req.query);
+  const { items, meta } = await listAssessments(req.query, req.user);
   return sendSuccess(res, { message: "Assessments retrieved", data: items, meta });
 }
 
 export async function getAssessmentDetails(req, res) {
-  const assessment = await getAssessmentById(req.params.id);
+  const assessment = await getAssessmentById(req.params.id, false, req.user);
   return sendSuccess(res, { message: "Assessment retrieved", data: assessment });
 }
 
 export async function getAssessmentQuestions(req, res) {
-  const assessment = await getAssessmentById(req.params.id);
+  const assessment = await getAssessmentById(req.params.id, false, req.user);
+  assertAssessmentCanStart(assessment, req.user);
   
   let questions = [];
   if (assessment.questionConfig?.isDynamic) {
@@ -44,13 +49,29 @@ export async function getAssessmentQuestions(req, res) {
 }
 
 export async function createAssessmentRecord(req, res) {
-  const assessment = await createAssessment(req.body, req.user._id);
+  const assessment = await createAssessment(req.body, req.user);
+  const assignedStudents = await listAssignedStudentsForAssessment(assessment._id);
+  emitUsersDataChanged(assignedStudents.map((student) => student._id), {
+    scope: "assessments",
+    source: "assessment:assigned",
+    entityId: assessment._id,
+  });
   emitAppDataChanged({
     scope: "assessments",
     source: "assessment:created",
     entityId: assessment._id,
   });
   return sendCreated(res, { message: "Assessment created", data: assessment });
+}
+
+export async function getClassrooms(req, res) {
+  const classrooms = await listClassrooms();
+  return sendSuccess(res, { message: "Classrooms retrieved", data: classrooms });
+}
+
+export async function getAssignmentReport(req, res) {
+  const report = await getAssessmentAssignmentReport(req.params.id, req.user);
+  return sendSuccess(res, { message: "Assignment report retrieved", data: report });
 }
 
 export async function getReviewSubmissions(req, res) {

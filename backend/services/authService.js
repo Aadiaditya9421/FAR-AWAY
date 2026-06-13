@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { OAuth2Client } from "google-auth-library";
 import { env } from "../config/env.js";
 import User from "../models/User.js";
+import LeaderBoard from "../models/LeaderBoard.js";
 import { ERROR_CODES } from "../utils/errorCodes.js";
 import { normalizeEmail } from "../utils/helpers.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwtUtils.js";
@@ -15,15 +16,44 @@ const STARTING_COIN_BALANCE = 500;
 
 let googleClient;
 
-function buildAuthPayload(user, refreshToken) {
-  const userData = user.toJSON();
-  return {
-    user: {
-      ...userData,
-      coinsBalance: userData.coinsBalance ?? 0,
-      totalCoinsEarned: userData.totalCoinsEarned ?? 0,
-      streak: userData.streak ?? 0,
+async function getUserLeaderboardSummary(userId) {
+  const totals = await LeaderBoard.aggregate([
+    {
+      $group: {
+        _id: "$userId",
+        xp: { $sum: "$xp" },
+        score: { $avg: "$score" },
+      },
     },
+    { $sort: { xp: -1, score: -1, _id: 1 } },
+  ]);
+
+  const currentId = userId?.toString?.() || String(userId);
+  const index = totals.findIndex((entry) => entry._id?.toString?.() === currentId);
+  const xp = index >= 0 ? Math.round(totals[index].xp || 0) : 0;
+
+  return {
+    xp,
+    rank: index >= 0 ? index + 1 : 0,
+    level: xp > 0 ? Math.floor(xp / 500) + 1 : 1,
+  };
+}
+
+async function buildPublicUser(user) {
+  const userData = user.toJSON();
+  const leaderboard = await getUserLeaderboardSummary(user._id);
+  return {
+    ...userData,
+    coinsBalance: userData.coinsBalance ?? 0,
+    totalCoinsEarned: userData.totalCoinsEarned ?? 0,
+    streak: userData.streak ?? 0,
+    ...leaderboard,
+  };
+}
+
+async function buildAuthPayload(user, refreshToken) {
+  return {
+    user: await buildPublicUser(user),
     accessToken: signAccessToken(user),
     refreshToken,
   };
@@ -363,7 +393,8 @@ export async function refreshAuthToken(refreshToken) {
 }
 
 export async function recordCurrentUserLogin(user) {
-  return recordDailyLogin(user);
+  const activeUser = await recordDailyLogin(user);
+  return buildPublicUser(activeUser);
 }
 
 export async function logoutUser(userId, refreshToken) {

@@ -3,8 +3,10 @@ import Badge from '../../components/ui/Badge';
 import Button from '../../components/ui/Button';
 import { IconZap, IconCoin, IconCheck } from '../../components/ui/Icons';
 
-export default function SpotlightCard({ competition, onRegister }) {
+export default function SpotlightCard({ competition, onRegister, isPreview = false }) {
   const registered = competition?.registered;
+  const title = isPreview ? 'Arena details locked' : competition?.title;
+  const desc = isPreview ? 'Sign in to view live arena topics, entry fee, prize pool, and participants.' : competition?.desc;
 
   return (
     <div className="card p-5 border-accentAmber/20 bg-gradient-to-b from-bgCard to-bgCard relative overflow-hidden">
@@ -26,10 +28,10 @@ export default function SpotlightCard({ competition, onRegister }) {
         </h4>
       </div>
       <h5 className="font-display font-bold text-xs text-textPrimary mb-2 relative leading-snug">
-        {competition?.title}
+        {title}
       </h5>
       <p className="text-[11px] text-textSecondary mb-4 leading-relaxed relative">
-        {competition?.desc}
+        {desc}
       </p>
 
       {/* Fee / Prize */}
@@ -38,14 +40,14 @@ export default function SpotlightCard({ competition, onRegister }) {
           Entry Fee:
           <strong className="text-textSecondary font-display flex items-center gap-0.5">
             <IconCoin size={11} />
-            {competition?.fee}
+            {isPreview ? '--' : competition?.fee}
           </strong>
         </span>
         <span className="flex items-center gap-1">
           Prize Pool:
           <strong className="text-accentAmber font-display flex items-center gap-0.5">
             <IconCoin size={11} />
-            {competition?.pool}
+            {isPreview ? 'Locked' : competition?.pool}
           </strong>
         </span>
       </div>
@@ -53,14 +55,14 @@ export default function SpotlightCard({ competition, onRegister }) {
       {/* Participants */}
       <div className="flex items-center gap-2 mb-4">
         <div className="flex -space-x-1.5">
-          {['AW','MC','SL'].map(a => (
-            <div key={a} className="w-5 h-5 rounded-full bg-accentIndigo/20 border border-bgCard
+          {(isPreview ? ['','', ''] : ['AW','MC','SL']).map((a, index) => (
+            <div key={a || index} className="w-5 h-5 rounded-full bg-accentIndigo/20 border border-bgCard
                                     flex items-center justify-center text-[8px] font-bold text-accentIndigo">
-              {a[0]}
+              {a ? a[0] : ''}
             </div>
           ))}
         </div>
-        <span className="text-[10px] text-textMuted">{competition?.participants} participants joined</span>
+        <span className="text-[10px] text-textMuted">{isPreview ? 'Participants hidden in preview' : `${competition?.participants} participants joined`}</span>
       </div>
 
       <Button
@@ -74,7 +76,7 @@ export default function SpotlightCard({ competition, onRegister }) {
             <IconCheck size={14} className="text-accentEmerald" />
             Arena Registered
           </span>
-        ) : 'Register Arena Entry'}
+        ) : isPreview ? 'Sign in for Arena Entry' : 'Register Arena Entry'}
       </Button>
     </div>
   );

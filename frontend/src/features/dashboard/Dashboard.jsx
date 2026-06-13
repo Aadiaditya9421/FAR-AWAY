@@ -1,6 +1,5 @@
 // src/features/dashboard/Dashboard.jsx
 import StatsRow from './StatsRow';
-import LearningPath from './LearningPath';
 import SkillsChart from './SkillsChart';
 import SpotlightCard from './SpotlightCard';
 import PeerLearningPanel from './PeerLearningPanel';
@@ -9,7 +8,6 @@ import TargetedPracticeCard from './TargetedPracticeCard';
 
 export default function Dashboard({
   user,
-  assessments,
   skillSwap,
   competitions,
   progress = [],
@@ -18,6 +16,7 @@ export default function Dashboard({
   dataLoading = false,
   dataError = '',
   isLiveData = false,
+  isPreview = false,
   onStartQuiz,
   onGoToAssessments,
   onGoToCoding,
@@ -50,17 +49,12 @@ export default function Dashboard({
       )}
 
       {/* Stats Row */}
-      <StatsRow user={user} onCoinClick={onCoinClick} />
+      <StatsRow user={user} onCoinClick={onCoinClick} isPreview={isPreview} />
 
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
         {/* Left (2/3) */}
         <div className="lg:col-span-2 flex flex-col gap-5">
-          <LearningPath
-            assessments={assessments.slice(0, 3)}
-            onStart={onStartQuiz}
-            onViewAll={onGoToAssessments}
-          />
           <AIInsightsCard insights={insights} loading={dataLoading} error={dataError} isLiveData={isLiveData} />
           <TargetedPracticeCard
             practiceSet={practiceSet}
@@ -71,7 +65,7 @@ export default function Dashboard({
             onGoToAssessments={onGoToAssessments}
             onGoToCoding={onGoToCoding}
           />
-          <SkillsChart progress={progress} />
+          <SkillsChart progress={progress} isPreview={isPreview} />
         </div>
 
         {/* Right (1/3) */}
@@ -79,6 +73,7 @@ export default function Dashboard({
           <SpotlightCard
             competition={liveComp}
             onRegister={onRegisterComp}
+            isPreview={isPreview}
           />
           <PeerLearningPanel
             matches={skillSwap.matches}

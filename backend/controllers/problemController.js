@@ -48,7 +48,7 @@ export async function submitProblem(req, res) {
     mode: "submit",
   });
   emitUserDataChanged(req.user._id, {
-    scope: "problems",
+    scope: "analytics",
     source: "problem:submitted",
     entityId: result.submissionId,
   });

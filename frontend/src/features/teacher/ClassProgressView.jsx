@@ -37,20 +37,33 @@ Study Tips:
 Let me know if you want to schedule a brief call during office hours to go over the solutions together. You are close to mastering this!`;
 }
 
-export default function ClassProgressView({ submissions, onSaveFeedback, onGenerateStudyNote, searchQuery }) {
+export default function ClassProgressView({ submissions, classrooms = [], onSaveFeedback, onGenerateStudyNote, searchQuery }) {
   const [selectedSubId, setSelectedSubId] = useState(null);
+  const [selectedClassId, setSelectedClassId] = useState('all');
   const [feedbackText, setFeedbackText] = useState('');
   const [aiGenerating, setAiGenerating] = useState(false);
   const [aiStep, setAiStep] = useState('');
 
+  const selectedClassroom = useMemo(() => {
+    if (selectedClassId === 'all') return null;
+    return classrooms.find(classroom => classroom.id === selectedClassId) || null;
+  }, [classrooms, selectedClassId]);
+
   // Filter submissions by student name or test title
   const filtered = useMemo(() => {
     return submissions.filter(s => {
+      if (selectedClassroom) {
+        const sameBatch = String(s.batch || '') === String(selectedClassroom.batch || '');
+        const sameBranch = String(s.branch || '') === String(selectedClassroom.branch || '');
+        if (!sameBatch || !sameBranch) return false;
+      }
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
-      return s.studentName.toLowerCase().includes(q) || s.testTitle.toLowerCase().includes(q);
+      return s.studentName.toLowerCase().includes(q)
+        || s.testTitle.toLowerCase().includes(q)
+        || (s.classLabel || '').toLowerCase().includes(q);
     });
-  }, [submissions, searchQuery]);
+  }, [submissions, searchQuery, selectedClassroom]);
 
   const selectedAttempt = useMemo(() => {
     return submissions.find(s => s.id === selectedSubId);
@@ -97,14 +110,14 @@ export default function ClassProgressView({ submissions, onSaveFeedback, onGener
 
   // Compute analytics
   const classAvg = useMemo(() => {
-    if (submissions.length === 0) return 0;
-    const total = submissions.reduce((acc, s) => acc + s.score, 0);
-    return Math.round(total / submissions.length);
-  }, [submissions]);
+    if (filtered.length === 0) return 0;
+    const total = filtered.reduce((acc, s) => acc + s.score, 0);
+    return Math.round(total / filtered.length);
+  }, [filtered]);
 
   const pendingFeedbackCount = useMemo(() => {
-    return submissions.filter(s => !s.feedback).length;
-  }, [submissions]);
+    return filtered.filter(s => !s.feedback).length;
+  }, [filtered]);
 
   return (
     <div className="animate-fadeIn space-y-6">
@@ -119,6 +132,35 @@ export default function ClassProgressView({ submissions, onSaveFeedback, onGener
       </div>
 
       {/* ── Analytics Widgets ── */}
+      <div className="card p-5 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <span className="label-caps">Classroom Group</span>
+          <h3 className="font-display font-semibold text-sm text-textPrimary mt-1">
+            {selectedClassroom ? selectedClassroom.name : 'All classroom groups'}
+          </h3>
+          <p className="text-[11px] text-textMuted mt-1">
+            {selectedClassroom
+              ? `${selectedClassroom.studentCount} students in roster`
+              : `${classrooms.reduce((sum, classroom) => sum + (classroom.studentCount || 0), 0)} students across ${classrooms.length} groups`}
+          </p>
+        </div>
+
+        <div className="w-full lg:w-72">
+          <select
+            value={selectedClassId}
+            onChange={event => setSelectedClassId(event.target.value)}
+            className="input h-[42px]"
+          >
+            <option value="all">All classroom groups</option>
+            {classrooms.map(classroom => (
+              <option key={classroom.id} value={classroom.id}>
+                {classroom.name} - {classroom.studentCount} students
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="card p-5 flex items-center justify-between">
           <div>
@@ -133,7 +175,7 @@ export default function ClassProgressView({ submissions, onSaveFeedback, onGener
         <div className="card p-5 flex items-center justify-between">
           <div>
             <span className="label-caps">Total Attempts</span>
-            <p className="font-display font-bold text-2xl text-textPrimary mt-1">{submissions.length}</p>
+            <p className="font-display font-bold text-2xl text-textPrimary mt-1">{filtered.length}</p>
           </div>
           <div className="w-10 h-10 rounded-xl bg-bgSecondary border border-borderColor flex items-center justify-center text-textSecondary">
             <IconUser size={18} />
@@ -197,6 +239,9 @@ export default function ClassProgressView({ submissions, onSaveFeedback, onGener
                         </p>
                         <p className="text-[11px] text-textMuted">
                           {attempt.subjectName} &nbsp;·&nbsp; {attempt.testTitle}
+                        </p>
+                        <p className="text-[10px] text-textMuted mt-0.5">
+                          {attempt.classLabel}
                         </p>
                       </div>
                     </div>

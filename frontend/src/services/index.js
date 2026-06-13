@@ -47,8 +47,10 @@ export async function logoutRequest() {
 /* ─────────────── Assessments ─────────────── */
 export const AssessmentService = {
   list: (query = '') => api.get(`/assessments${query}`, { auth: true }),
+  classrooms: () => api.get('/assessments/classrooms', { auth: true }),
   submissions: (query = '') => api.get(`/assessments/submissions${query}`, { auth: true }),
   details: (id) => api.get(`/assessments/${id}`, { auth: true }),
+  assignmentReport: (id) => api.get(`/assessments/${id}/assignment-report`, { auth: true }),
   questions: (id) => api.get(`/assessments/${id}/questions`, { auth: true }),
   submit: (id, answers, timeTaken) => {
     const normalizedAnswers = Array.isArray(answers)
@@ -93,6 +95,7 @@ export const SkillSwapService = {
 export const ProblemService = {
   list: (query = '') => api.get(`/problems${query}`, { auth: true }),
   details: (id) => api.get(`/problems/${id}`, { auth: true }),
+  create: (payload) => api.post('/problems', payload, { auth: true }),
   run: (id, { language, sourceCode }) =>
     api.post(`/problems/${id}/run`, { language, sourceCode }, { auth: true }),
   submit: (id, { language, sourceCode }) =>

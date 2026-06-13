@@ -25,6 +25,8 @@ const STUDENT_NAV = [
 const TEACHER_NAV = [
   { id: 'class-progress', Icon: IconUser,       label: 'Class Progress' },
   { id: 'create-test',    Icon: IconPlus,       label: 'Create Lab Test' },
+  { id: 'coding',         Icon: IconCode,       label: 'Coding Bank' },
+  { id: 'leaderboard',    Icon: IconTrophy,     label: 'Leaderboards' },
 ];
 
 export default function Header({
@@ -48,7 +50,7 @@ export default function Header({
   onToggleTheme,
   userRole = 'student',
 }) {
-  const navs = userRole === 'teacher' ? TEACHER_NAV : STUDENT_NAV;
+  const navs = userRole === 'teacher' || userRole === 'admin' ? TEACHER_NAV : STUDENT_NAV;
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
@@ -77,7 +79,7 @@ export default function Header({
         )}
         <div
           className="flex items-center gap-3.5 cursor-pointer"
-          onClick={() => onTabChange(userRole === 'teacher' ? 'class-progress' : 'dashboard')}
+          onClick={() => onTabChange(userRole === 'teacher' || userRole === 'admin' ? 'class-progress' : 'dashboard')}
         >
           {/* Logo icon only appears when size is 100% (large desktops), hidden on smaller sizes */}
           <div className="hidden xl:block transition-all duration-300">
@@ -149,7 +151,7 @@ export default function Header({
         </div>
 
         {/* Stats Pill Capsule */}
-        {userRole !== 'teacher' && (
+        {userRole === 'student' && (
           <div className="hidden lg:flex items-center gap-3">
             {/* Coins balance */}
             <button
@@ -264,7 +266,7 @@ export default function Header({
                   {user.name.split(' ')[0]}
                 </span>
                 <span className="text-[9px] text-textMuted mt-0.5">
-                  {userRole === 'teacher' ? 'Faculty' : `Lv.${user.level}`}
+                  {userRole === 'admin' ? 'Admin' : userRole === 'teacher' ? 'Faculty' : `Lv.${user.level}`}
                 </span>
               </div>
             </button>
@@ -275,7 +277,7 @@ export default function Header({
                   <Avatar initials={user.initials || 'TR'} size="md" />
                   <div className="min-w-0">
                     <p className="text-[13px] font-bold text-textPrimary truncate">{user.name}</p>
-                    <p className="text-[11px] text-textMuted">{userRole === 'teacher' ? 'Faculty account' : 'Student account'}</p>
+                    <p className="text-[11px] text-textMuted">{userRole === 'admin' ? 'Admin account' : userRole === 'teacher' ? 'Faculty account' : 'Student account'}</p>
                   </div>
                 </div>
 
@@ -298,7 +300,7 @@ export default function Header({
                   </div>
                 </div>
 
-                {userRole !== 'teacher' && (
+                {userRole === 'student' && (
                   <button
                     type="button"
                     onClick={() => {

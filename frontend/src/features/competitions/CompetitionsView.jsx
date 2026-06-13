@@ -2,7 +2,7 @@
 import CompetitionCard from './CompetitionCard';
 import { IconCoin, IconClock, IconCheck, IconSearch } from '../../components/ui/Icons';
 
-export default function CompetitionsView({ competitions, onRegister, userCoins, searchQuery }) {
+export default function CompetitionsView({ competitions, onRegister, userCoins, searchQuery, isPreview = false }) {
   const filtered = competitions.filter(c => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
@@ -33,7 +33,7 @@ export default function CompetitionsView({ competitions, onRegister, userCoins, 
           </div>
           <div>
             <p className="text-xs text-textMuted font-display">Available balance</p>
-            <p className="font-display font-bold text-accentAmber">{userCoins} coins</p>
+            <p className="font-display font-bold text-accentAmber">{isPreview ? 'Hidden' : `${userCoins} coins`}</p>
           </div>
         </div>
         <p className="text-[11px] text-textMuted max-w-xs text-right hidden sm:block">
@@ -52,7 +52,7 @@ export default function CompetitionsView({ competitions, onRegister, userCoins, 
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {live.map(c => (
-              <CompetitionCard key={c.id} comp={c} onRegister={onRegister} userCoins={userCoins} />
+              <CompetitionCard key={c.id} comp={c} onRegister={onRegister} userCoins={userCoins} isPreview={isPreview} />
             ))}
           </div>
         </section>
@@ -69,7 +69,7 @@ export default function CompetitionsView({ competitions, onRegister, userCoins, 
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {upcoming.map(c => (
-              <CompetitionCard key={c.id} comp={c} onRegister={onRegister} userCoins={userCoins} />
+              <CompetitionCard key={c.id} comp={c} onRegister={onRegister} userCoins={userCoins} isPreview={isPreview} />
             ))}
           </div>
         </section>
@@ -86,7 +86,7 @@ export default function CompetitionsView({ competitions, onRegister, userCoins, 
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {completed.map(c => (
-              <CompetitionCard key={c.id} comp={c} onRegister={onRegister} userCoins={userCoins} />
+              <CompetitionCard key={c.id} comp={c} onRegister={onRegister} userCoins={userCoins} isPreview={isPreview} />
             ))}
           </div>
         </section>

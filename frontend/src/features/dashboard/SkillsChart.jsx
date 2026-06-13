@@ -1,16 +1,16 @@
 import { IconTrophy } from '../../components/ui/Icons';
 
-export default function SkillsChart({ progress = [] }) {
+export default function SkillsChart({ progress = [], isPreview = false }) {
   const topics = ['JavaScript', 'React', 'Python', 'DSA', 'OOPs', 'WebDev', 'Backend'];
 
   // Map backend mastery values, default to 25% for unstarted topics (P(L0) = 0.25)
-  const topicMasteryList = topics.map(t => {
+  const topicMasteryList = topics.map((t, index) => {
     const record = progress.find(p => p.topic.toLowerCase() === t.toLowerCase());
     const masteryVal = record && record.mastery !== undefined ? record.mastery : 0.25;
     return {
       topic: t,
-      value: Math.round(masteryVal * 100),
-      active: !!record && record.attemptCount > 0,
+      value: isPreview ? [42, 66, 58, 75, 50, 62, 46][index] : Math.round(masteryVal * 100),
+      active: isPreview ? true : !!record && record.attemptCount > 0,
     };
   });
 
@@ -29,7 +29,7 @@ export default function SkillsChart({ progress = [] }) {
             </h4>
           </div>
           <p className="text-[10px] text-textMuted mt-0.5">
-            Bayesian Knowledge Tracing (BKT) probability scores per subject area
+            {isPreview ? 'Sign in to unlock your live mastery graph' : 'Bayesian Knowledge Tracing (BKT) probability scores per subject area'}
           </p>
         </div>
         <div className="flex items-center gap-1.5">
@@ -48,7 +48,7 @@ export default function SkillsChart({ progress = [] }) {
                   className="absolute -top-5 left-1/2 -translate-x-1/2 text-[9px]
                               font-display font-bold text-accentIndigo whitespace-nowrap"
                 >
-                  {bar.value}%
+                  {isPreview ? '--' : `${bar.value}%`}
                 </div>
               )}
               <div
@@ -62,7 +62,7 @@ export default function SkillsChart({ progress = [] }) {
               />
             </div>
             <span className="text-[9px] text-textMuted whitespace-nowrap truncate max-w-[42px]" title={bar.topic}>
-              {bar.topic}
+              {isPreview ? 'Locked' : bar.topic}
             </span>
           </div>
         ))}
@@ -71,9 +71,9 @@ export default function SkillsChart({ progress = [] }) {
       {/* Summary row */}
       <div className="flex justify-between mt-3 pt-1">
         {[
-          { label: 'Avg Mastery', value: `${avgMastery}%`, color: 'text-accentIndigo' },
-          { label: 'Started',     value: `${activeCount} / ${topics.length}`, color: 'text-textSecondary' },
-          { label: 'Top Skill',   value: bestTopic.topic, color: 'text-accentEmerald' },
+          { label: 'Avg Mastery', value: isPreview ? 'Hidden' : `${avgMastery}%`, color: 'text-accentIndigo' },
+          { label: 'Started',     value: isPreview ? 'Hidden' : `${activeCount} / ${topics.length}`, color: 'text-textSecondary' },
+          { label: 'Top Skill',   value: isPreview ? 'Hidden' : bestTopic.topic, color: 'text-accentEmerald' },
         ].map(s => (
           <div key={s.label} className="text-center">
             <p className={`font-display font-bold text-sm ${s.color}`}>{s.value}</p>

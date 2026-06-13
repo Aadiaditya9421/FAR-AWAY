@@ -1,8 +1,27 @@
 import CodingSubmission from "../models/CodingSubmission.js";
 import Problem from "../models/Problem.js";
+import { env } from "../config/env.js";
 import { ERROR_CODES } from "../utils/errorCodes.js";
 import { AppError } from "../utils/responseHandler.js";
 import { executeCode } from "./judgeService.js";
+import { updateLeaderboardForSubmission } from "./leaderboardService.js";
+
+const BASE_LANGUAGES = ["javascript"];
+const JUDGE0_LANGUAGES = ["javascript", "python", "cpp", "java"];
+
+function enabledLanguages() {
+  return env.judge0Url ? JUDGE0_LANGUAGES : BASE_LANGUAGES;
+}
+
+function starterCodeFor(language) {
+  const starters = {
+    javascript: "const data = input.trim().split(/\\s+/);\\nconsole.log(data.join(' '));",
+    python: "import sys\\n\\ndata = sys.stdin.read().strip().split()\\nprint(' '.join(data))",
+    cpp: "#include <bits/stdc++.h>\\nusing namespace std;\\n\\nint main() {\\n    ios::sync_with_stdio(false);\\n    cin.tie(nullptr);\\n\\n    string x;\\n    vector<string> data;\\n    while (cin >> x) data.push_back(x);\\n    for (size_t i = 0; i < data.size(); ++i) {\\n        if (i) cout << ' ';\\n        cout << data[i];\\n    }\\n    return 0;\\n}",
+    java: "import java.io.*;\\nimport java.util.*;\\n\\npublic class Main {\\n    public static void main(String[] args) throws Exception {\\n        Scanner sc = new Scanner(System.in);\\n        List<String> data = new ArrayList<>();\\n        while (sc.hasNext()) data.add(sc.next());\\n        System.out.println(String.join(\" \", data));\\n    }\\n}",
+  };
+  return starters[language] || "";
+}
 
 function normalizeOutput(value = "") {
   return String(value)
@@ -15,8 +34,23 @@ function normalizeOutput(value = "") {
 
 function publicProblem(problem) {
   const raw = problem.toObject();
+  const runtimeLanguages = enabledLanguages();
+  const supportedLanguages = [...new Set([...(raw.supportedLanguages || []), ...runtimeLanguages])];
+  const starterLanguages = new Set((raw.starterCode || []).map((item) => item.language));
+  const starterCode = [
+    ...(raw.starterCode || []),
+    ...supportedLanguages
+      .filter((language) => !starterLanguages.has(language))
+      .map((language) => ({ language, code: starterCodeFor(language) })),
+  ];
+
   return {
     ...raw,
+    runtimeLanguages,
+    supportedLanguages,
+    starterCode,
+    compilerProvider: env.judge0Url ? "judge0" : "local-js",
+    totalTestCases: raw.testCases.length,
     testCases: raw.testCases
       .filter((testCase) => !testCase.isHidden)
       .map((testCase) => ({
@@ -81,8 +115,13 @@ export async function gradeProblem({ problemId, userId, language, sourceCode, mo
   }
 
   const normalizedLanguage = language.toLowerCase();
-  if (!problem.supportedLanguages.includes(normalizedLanguage)) {
+  const runtimeLanguages = enabledLanguages();
+  const declaredLanguages = problem.supportedLanguages?.length ? problem.supportedLanguages : runtimeLanguages;
+  if (!declaredLanguages.includes(normalizedLanguage) && !runtimeLanguages.includes(normalizedLanguage)) {
     throw new AppError(`Unsupported language for this problem: ${language}`, 400, ERROR_CODES.BAD_REQUEST);
+  }
+  if (!runtimeLanguages.includes(normalizedLanguage)) {
+    throw new AppError(`Compiler for ${language} is not configured`, 503, ERROR_CODES.INTERNAL_ERROR);
   }
 
   const revealHidden = mode === "run";
@@ -137,6 +176,15 @@ export async function gradeProblem({ problemId, userId, language, sourceCode, mo
       sourceCode,
       ...payload,
     });
+
+    const score = results.length ? Math.round((passedCount / results.length) * 100) : 0;
+    await updateLeaderboardForSubmission({
+      userId,
+      topic: "Coding",
+      score,
+      coinsEarned: 0,
+    });
+
     return { ...payload, submissionId: submission._id };
   }
 
