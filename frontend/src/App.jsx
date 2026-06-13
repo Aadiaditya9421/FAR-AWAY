@@ -2,7 +2,7 @@
 // ─── Far Away — Main App Orchestrator ───
 // All business logic lives here. Feature views are pure presentational components.
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 // ── Auth ──
 import { useAuth } from './context/AuthContext';
 import LandingPage from './features/auth/LandingPage';
@@ -591,6 +591,7 @@ export default function App() {
 
   // ─── Auth ───
   const { isLoggedIn, authUser, initializing, logout, refreshUser } = useAuth();
+  const refreshUserRef = useRef(refreshUser);
 
   const initialAuthScreen = getInitialAuthScreen();
 
@@ -609,6 +610,10 @@ export default function App() {
     document.documentElement.dataset.theme = themeMode;
     window.localStorage.setItem('far-away-theme', themeMode);
   }, [themeMode]);
+
+  useEffect(() => {
+    refreshUserRef.current = refreshUser;
+  }, [refreshUser]);
 
   // ───────────────────────────────────────────
   // APP STATE (with dynamic subjects and role sync)
@@ -713,26 +718,9 @@ export default function App() {
         ]);
         setSkillSwap(mapSkillSwap(skillSwapData, authUserId, recommendedPeersData));
       };
-      
-      const socket = getRootSocket();
-      if (socket) {
-        socket.on('notification:new', (payload) => {
-          const notification = buildNotification(payload);
-          setNotifications(prev => [
-            notification,
-            ...prev.filter(item => item.id !== notification.id),
-          ].slice(0, 20));
-          showToast(notification.body, notification.type || 'info');
-          setHasUnread(true);
-          if (notification.category === 'skillswap') {
-            refreshSkillSwapFromServer().catch(err => {
-              console.error('Failed to refresh SkillSwap after notification:', err);
-            });
-          }
-        });
-      }
 
-      const fetchData = async () => {
+      const fetchData = async ({ silent = false } = {}) => {
+        if (!silent) setAppDataLoading(true);
         try {
           const role = authUser.role || 'student';
 
@@ -749,6 +737,7 @@ export default function App() {
             setProgress([]);
             setInsights(null);
             setPracticeSet(null);
+            setAppDataError('');
             return;
           }
 
@@ -795,6 +784,10 @@ export default function App() {
           );
         } catch (err) {
           console.error('Failed to fetch app data from API:', err);
+          if (silent) {
+            setAppDataError(err.message || 'Unable to refresh live data from server.');
+            return;
+          }
           showToast('Could not load live data from server. Please retry or check the backend.', 'error');
           setSubjects(groupAssessmentsIntoSubjects([]));
           setCompetitions([]);
@@ -805,15 +798,66 @@ export default function App() {
           setPracticeSet(null);
           setAppDataError(err.message || 'Unable to load live data from server.');
         } finally {
-          setAppDataLoading(false);
+          if (!silent) setAppDataLoading(false);
         }
       };
+
+      let refreshTimer = null;
+      let active = true;
+      const queueLiveRefresh = (payload = {}) => {
+        if (!active) return;
+        window.clearTimeout(refreshTimer);
+        refreshTimer = window.setTimeout(() => {
+          const shouldRefreshUser = ['account', 'profile', 'analytics'].includes(payload.scope);
+          if (shouldRefreshUser) {
+            refreshUserRef.current().catch(err => {
+              console.error('Failed to refresh user after realtime update:', err);
+            });
+          }
+          fetchData({ silent: true });
+          window.dispatchEvent(new CustomEvent('faraway:data-changed', { detail: payload }));
+        }, 250);
+      };
+
+      const socket = getRootSocket();
+      const handleNotification = (payload) => {
+        const notification = buildNotification(payload);
+        setNotifications(prev => [
+          notification,
+          ...prev.filter(item => item.id !== notification.id),
+        ].slice(0, 20));
+        showToast(notification.body, notification.type || 'info');
+        setHasUnread(true);
+        if (notification.category === 'skillswap') {
+          refreshSkillSwapFromServer().catch(err => {
+            console.error('Failed to refresh SkillSwap after notification:', err);
+          });
+        }
+      };
+      const handleDataChanged = (payload = {}) => {
+        queueLiveRefresh(payload);
+      };
+      const handleReconnect = () => {
+        queueLiveRefresh({ scope: 'all', source: 'socket:reconnect' });
+      };
+
+      if (socket) {
+        socket.on('notification:new', handleNotification);
+        socket.on('app:data-changed', handleDataChanged);
+        socket.io?.on('reconnect', handleReconnect);
+      }
 
       fetchData();
 
       return () => {
+        active = false;
+        window.clearTimeout(refreshTimer);
         const s = getRootSocket();
-        if (s) s.off('notification:new');
+        if (s) {
+          s.off('notification:new', handleNotification);
+          s.off('app:data-changed', handleDataChanged);
+          s.io?.off('reconnect', handleReconnect);
+        }
       };
     } else {
       disconnectSockets();

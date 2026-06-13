@@ -18,6 +18,9 @@ export function connectSockets() {
   const socketOptions = {
     auth: { token },
     transports: ['websocket', 'polling'],
+    withCredentials: true,
+    reconnection: true,
+    reconnectionAttempts: 10,
   };
 
   // Root namespace connection
@@ -27,6 +30,10 @@ export function connectSockets() {
     console.log('Root socket connected');
   });
 
+  rootSocket.on('connect_error', (error) => {
+    console.warn('Root socket connection failed:', error.message);
+  });
+
   // Leaderboard namespace connection
   leaderboardSocket = io(`${SOCKET_HOST}/leaderboard`, socketOptions);
 
@@ -34,11 +41,19 @@ export function connectSockets() {
     console.log('Leaderboard namespace socket connected');
   });
 
+  leaderboardSocket.on('connect_error', (error) => {
+    console.warn('Leaderboard socket connection failed:', error.message);
+  });
+
   // Competition namespace connection
   competitionSocket = io(`${SOCKET_HOST}/competition`, socketOptions);
 
   competitionSocket.on('connect', () => {
     console.log('Competition namespace socket connected');
+  });
+
+  competitionSocket.on('connect_error', (error) => {
+    console.warn('Competition socket connection failed:', error.message);
   });
 }
 

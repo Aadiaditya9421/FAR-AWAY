@@ -4,6 +4,7 @@ import {
   joinCompetition,
   listCompetitions,
 } from "../services/competitionService.js";
+import { emitAppDataChanged, emitUserDataChanged } from "../sockets/notificationSocket.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
 
 export async function getCompetitions(req, res) {
@@ -13,11 +14,26 @@ export async function getCompetitions(req, res) {
 
 export async function createCompetitionRecord(req, res) {
   const competition = await createCompetition(req.body, req.user._id);
+  emitAppDataChanged({
+    scope: "competitions",
+    source: "competition:created",
+    entityId: competition._id,
+  });
   return sendCreated(res, { message: "Competition created", data: competition });
 }
 
 export async function joinCompetitionRecord(req, res) {
   const competition = await joinCompetition(req.params.id, req.user._id, req.body);
+  emitUserDataChanged(req.user._id, {
+    scope: "competitions",
+    source: "competition:joined",
+    entityId: competition._id,
+  });
+  emitAppDataChanged({
+    scope: "competitions",
+    source: "competition:joined",
+    entityId: competition._id,
+  });
   return sendSuccess(res, { message: "Competition joined", data: competition });
 }
 

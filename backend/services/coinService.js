@@ -1,5 +1,6 @@
 import Coin from "../models/Coin.js";
 import User from "../models/User.js";
+import { emitUserDataChanged } from "../sockets/notificationSocket.js";
 import { ERROR_CODES } from "../utils/errorCodes.js";
 import { parsePagination, buildPaginationMeta } from "../utils/helpers.js";
 import { AppError } from "../utils/responseHandler.js";
@@ -59,7 +60,7 @@ export async function creditCoins(userId, amount, reason, referenceType = "manua
 
   if (!user) throw new AppError("User not found", 404, ERROR_CODES.NOT_FOUND);
 
-  return Coin.create({
+  const transaction = await Coin.create({
     userId,
     type: "credit",
     amount,
@@ -68,6 +69,12 @@ export async function creditCoins(userId, amount, reason, referenceType = "manua
     referenceType,
     referenceId,
   });
+  emitUserDataChanged(userId, {
+    scope: "account",
+    source: `coins:${referenceType}:credit`,
+    entityId: transaction._id,
+  });
+  return transaction;
 }
 
 export async function debitCoins(userId, amount, reason, referenceType = "manual", referenceId = null) {
@@ -92,7 +99,7 @@ export async function debitCoins(userId, amount, reason, referenceType = "manual
     throw new AppError("Not enough coins", 400, ERROR_CODES.INSUFFICIENT_COINS);
   }
 
-  return Coin.create({
+  const transaction = await Coin.create({
     userId,
     type: "debit",
     amount,
@@ -101,6 +108,12 @@ export async function debitCoins(userId, amount, reason, referenceType = "manual
     referenceType,
     referenceId,
   });
+  emitUserDataChanged(userId, {
+    scope: "account",
+    source: `coins:${referenceType}:debit`,
+    entityId: transaction._id,
+  });
+  return transaction;
 }
 
 export async function claimDailyBonus(userId) {
@@ -139,13 +152,18 @@ export async function claimDailyBonus(userId) {
     );
   }
 
-  await Coin.create({
+  const transaction = await Coin.create({
     userId,
     type: "credit",
     amount: DAILY_BONUS_AMOUNT,
     balanceAfter: user.coinsBalance,
     reason: "Daily login bonus",
     referenceType: "daily_bonus",
+  });
+  emitUserDataChanged(userId, {
+    scope: "account",
+    source: "coins:daily-bonus",
+    entityId: transaction._id,
   });
 
   return {

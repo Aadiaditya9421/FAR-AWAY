@@ -5,6 +5,7 @@ import {
   listProblems,
 } from "../services/gradingService.js";
 import { reviewCodeForProblem } from "../services/aiTutorService.js";
+import { emitAppDataChanged, emitUserDataChanged } from "../sockets/notificationSocket.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
 
 export async function getProblems(req, res) {
@@ -19,6 +20,11 @@ export async function getProblemDetails(req, res) {
 
 export async function createProblemRecord(req, res) {
   const problem = await createProblem(req.body, req.user._id);
+  emitAppDataChanged({
+    scope: "problems",
+    source: "problem:created",
+    entityId: problem._id,
+  });
   return sendCreated(res, { message: "Problem created", data: problem });
 }
 
@@ -40,6 +46,11 @@ export async function submitProblem(req, res) {
     language: req.body.language,
     sourceCode: req.body.sourceCode,
     mode: "submit",
+  });
+  emitUserDataChanged(req.user._id, {
+    scope: "problems",
+    source: "problem:submitted",
+    entityId: result.submissionId,
   });
   return sendCreated(res, { message: "Code submission graded", data: result });
 }

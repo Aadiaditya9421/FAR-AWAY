@@ -114,6 +114,34 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth }) {
     };
   }, [isLoggedIn]);
 
+  useEffect(() => {
+    if (!isLoggedIn) return undefined;
+
+    let active = true;
+    async function refreshProblems() {
+      try {
+        const data = await ProblemService.list();
+        if (!active) return;
+        setProblems(data);
+      } catch (err) {
+        if (active) setError(err.message || 'Could not refresh coding problems.');
+      }
+    }
+
+    const handleDataChanged = (event) => {
+      const scope = event.detail?.scope || 'all';
+      if (scope === 'all' || scope === 'problems') {
+        refreshProblems();
+      }
+    };
+
+    window.addEventListener('faraway:data-changed', handleDataChanged);
+    return () => {
+      active = false;
+      window.removeEventListener('faraway:data-changed', handleDataChanged);
+    };
+  }, [isLoggedIn]);
+
   const activeProblem = useMemo(
     () => problems.find(problem => (problem._id || problem.id) === activeProblemId),
     [problems, activeProblemId],

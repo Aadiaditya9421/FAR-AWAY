@@ -9,7 +9,7 @@ import {
   sendSkillSwapMessage,
   updateSkillSwapMeetingUrl,
 } from "../services/skillswapService.js";
-import { notifyUser } from "../sockets/notificationSocket.js";
+import { emitAppDataChanged, emitUsersDataChanged, notifyUser } from "../sockets/notificationSocket.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
 
 function userId(value) {
@@ -38,6 +38,25 @@ function notifyCounterpart(request, actorId, payload) {
   const actor = userId(actorId);
   const targetId = requesterId === actor ? receiverId : requesterId;
   notifySkillSwap(targetId, payload);
+}
+
+function skillSwapParticipantIds(request) {
+  return [userId(request?.requester), userId(request?.receiver)].filter(Boolean);
+}
+
+function emitSkillSwapChanged(request, action, audience = "all") {
+  const payload = {
+    scope: "skillswap",
+    source: `skillswap:${action}`,
+    entityId: request?._id,
+  };
+
+  if (audience === "participants") {
+    emitUsersDataChanged(skillSwapParticipantIds(request), payload);
+    return;
+  }
+
+  emitAppDataChanged(payload);
 }
 
 export async function getRequests(req, res) {
@@ -80,6 +99,7 @@ export async function postRequest(req, res) {
     });
   }
 
+  emitSkillSwapChanged(request, request.receiver ? "requested" : "posted");
   return sendCreated(res, { message: "SkillSwap request created", data: request });
 }
 
@@ -101,6 +121,7 @@ export async function acceptRequest(req, res) {
     action: "accepted",
     requestId,
   });
+  emitSkillSwapChanged(request, "accepted");
   return sendSuccess(res, { message: "SkillSwap request accepted", data: request });
 }
 
@@ -122,6 +143,7 @@ export async function declineRequest(req, res) {
     action: "declined",
     requestId,
   });
+  emitSkillSwapChanged(request, "declined");
   return sendSuccess(res, { message: "SkillSwap request declined", data: request });
 }
 
@@ -143,6 +165,7 @@ export async function cancelRequest(req, res) {
     action: "cancelled",
     requestId,
   });
+  emitSkillSwapChanged(request, "cancelled");
   return sendSuccess(res, { message: "SkillSwap request cancelled", data: request });
 }
 
@@ -164,6 +187,7 @@ export async function completeRequest(req, res) {
     action: "completed",
     requestId,
   });
+  emitSkillSwapChanged(request, "completed", "participants");
   return sendSuccess(res, { message: "SkillSwap request completed", data: request });
 }
 
@@ -187,6 +211,7 @@ export async function sendMessage(req, res) {
     requestId,
   });
 
+  emitSkillSwapChanged(request, "message", "participants");
   return sendSuccess(res, { message: "SkillSwap message sent", data: request });
 }
 
@@ -210,5 +235,6 @@ export async function updateMeeting(req, res) {
     requestId,
   });
 
+  emitSkillSwapChanged(request, "meeting", "participants");
   return sendSuccess(res, { message: "SkillSwap meeting link updated", data: request });
 }

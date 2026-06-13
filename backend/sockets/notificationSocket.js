@@ -32,7 +32,7 @@ export async function initializeSockets(httpServer) {
   io = new Server(httpServer, {
     cors: {
       origin: env.corsOrigins,
-      methods: ["GET", "POST"],
+      methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
       credentials: true,
     },
   });
@@ -77,4 +77,48 @@ export function getIO() {
 export function notifyUser(userId, payload) {
   if (!io) return;
   io.to(`user:${userId}`).emit(SOCKET_EVENTS.NOTIFICATION, payload);
+}
+
+function normalizeDataChangedPayload(payload = {}) {
+  const normalized = {
+    scope: payload.scope || "all",
+    source: payload.source || "server",
+    updatedAt: new Date().toISOString(),
+  };
+
+  if (payload.entityId) normalized.entityId = payload.entityId.toString();
+  if (payload.message) normalized.message = payload.message;
+  if (payload.actorId) normalized.actorId = payload.actorId.toString();
+  if (payload.audience) normalized.audience = payload.audience;
+
+  return normalized;
+}
+
+/**
+ * Tell every authenticated client to refresh data through normal API routes.
+ * The payload intentionally stays generic; private data remains behind API auth.
+ */
+export function emitAppDataChanged(payload = {}) {
+  if (!io) return;
+  io.emit(SOCKET_EVENTS.APP_DATA_CHANGED, normalizeDataChangedPayload(payload));
+}
+
+/**
+ * Tell selected users to refresh private account/user-scoped data.
+ */
+export function emitUserDataChanged(userId, payload = {}) {
+  if (!io || !userId) return;
+  io.to(`user:${userId}`).emit(
+    SOCKET_EVENTS.APP_DATA_CHANGED,
+    normalizeDataChangedPayload({
+      scope: "account",
+      audience: "user",
+      ...payload,
+    }),
+  );
+}
+
+export function emitUsersDataChanged(userIds = [], payload = {}) {
+  const uniqueIds = [...new Set(userIds.map((id) => id?._id?.toString?.() || id?.toString?.()).filter(Boolean))];
+  uniqueIds.forEach((id) => emitUserDataChanged(id, payload));
 }

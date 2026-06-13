@@ -8,6 +8,7 @@ import {
 } from "../services/assessmentService.js";
 import { recordIntegrityEvent } from "../services/integrityService.js";
 import { selectQuestionsForAttempt } from "../services/questionSelectionService.js";
+import { emitAppDataChanged, emitUserDataChanged } from "../sockets/notificationSocket.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
 
 export async function getAssessments(req, res) {
@@ -44,6 +45,11 @@ export async function getAssessmentQuestions(req, res) {
 
 export async function createAssessmentRecord(req, res) {
   const assessment = await createAssessment(req.body, req.user._id);
+  emitAppDataChanged({
+    scope: "assessments",
+    source: "assessment:created",
+    entityId: assessment._id,
+  });
   return sendCreated(res, { message: "Assessment created", data: assessment });
 }
 
@@ -57,6 +63,16 @@ export async function saveSubmissionFeedback(req, res) {
     submissionId: req.params.id,
     reviewer: req.user,
     feedback: req.body.feedback,
+  });
+  emitUserDataChanged(submission.userId?._id || submission.userId, {
+    scope: "assessments",
+    source: "assessment:feedback",
+    entityId: submission._id,
+  });
+  emitAppDataChanged({
+    scope: "submissions",
+    source: "assessment:feedback",
+    entityId: submission._id,
   });
   return sendSuccess(res, { message: "Submission feedback saved", data: submission });
 }
@@ -81,6 +97,16 @@ export async function submitAssessmentRecord(req, res) {
     answers: req.body.answers,
     timeTaken: req.body.timeTaken,
     attemptId: req.body.attemptId,
+  });
+  emitUserDataChanged(req.user._id, {
+    scope: "analytics",
+    source: "assessment:submitted",
+    entityId: submission._id,
+  });
+  emitAppDataChanged({
+    scope: "submissions",
+    source: "assessment:submitted",
+    entityId: submission._id,
   });
   return sendCreated(res, { message: "Assessment submitted", data: submission });
 }
