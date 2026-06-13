@@ -5,15 +5,15 @@ export default {
     extend: {
       colors: {
         // ── Canvas & Surfaces (Cal.com + Mistral merged) ──
-        bgPrimary:    '#f5f5f5',   // Light gray page canvas (Cal surface-card)
-        bgSecondary:  '#eeeeee',   // Deeper secondary surfaces
-        bgCard:       '#ffffff',   // White card surface
-        bgCardHover:  '#fafafa',   // Card hover
-        bgGlass:      'rgba(255,255,255,0.9)', // Frosted glass (light)
+        bgPrimary:    'rgb(var(--app-bg-primary) / <alpha-value>)',
+        bgSecondary:  'rgb(var(--app-bg-secondary) / <alpha-value>)',
+        bgCard:       'rgb(var(--app-bg-card) / <alpha-value>)',
+        bgCardHover:  'rgb(var(--app-bg-card-hover) / <alpha-value>)',
+        bgGlass:      'rgb(var(--app-bg-glass) / <alpha-value>)',
 
         // ── Borders (Cal.com hairlines) ──
-        borderColor:  '#e5e7eb',   // Cal hairline
-        borderHover:  '#c7c7c7',   // Mistral hairline-strong
+        borderColor:  'rgb(var(--app-border-color) / <alpha-value>)',
+        borderHover:  'rgb(var(--app-border-hover) / <alpha-value>)',
         borderActive: '#fa520f',   // Mistral orange on focus
 
         // ── Primary Accent: Mistral Orange ──
@@ -34,10 +34,10 @@ export default {
         sunshine700:   '#ffa110',
 
         // ── Text (Mistral ink scale) ──
-        textPrimary:   '#1f1f1f',  // Mistral ink
-        textSecondary: '#4a4a4a',  // Mistral slate
-        textMuted:     '#8a8a8a',  // Mistral stone
-        textFaint:     '#c7c7c7',  // Disabled / placeholders
+        textPrimary:   'rgb(var(--app-text-primary) / <alpha-value>)',
+        textSecondary: 'rgb(var(--app-text-secondary) / <alpha-value>)',
+        textMuted:     'rgb(var(--app-text-muted) / <alpha-value>)',
+        textFaint:     'rgb(var(--app-text-faint) / <alpha-value>)',
 
         // ── Dark surface (Cal.com footer) ──
         surfaceDark:   '#101010',

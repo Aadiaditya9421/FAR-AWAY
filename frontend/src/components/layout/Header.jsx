@@ -10,6 +10,7 @@ import {
   IconLayoutGrid, IconBook, IconTrophy,
   IconZap, IconArrowsSwap, IconSearch, IconBell,
   IconCoin, IconFlame, IconLogOut, IconLogIn, IconPlus, IconUser, IconCode,
+  IconMoon, IconSun,
 } from '../ui/Icons';
 
 const STUDENT_NAV = [
@@ -38,10 +39,35 @@ export default function Header({
   hasUnread,
   onNotificationClick,
   onCoinClick,
+  themeMode = 'light',
+  onToggleTheme,
   userRole = 'student',
 }) {
   const navs = userRole === 'teacher' ? TEACHER_NAV : STUDENT_NAV;
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
+  const isDark = themeMode === 'dark';
+
+  const notifications = [
+    {
+      title: 'Welcome back',
+      body: isLoggedIn
+        ? 'Your learning profile is ready. Complete an assessment to refresh insights.'
+        : 'Sign in to save progress, streaks, and coins.',
+    },
+    {
+      title: 'Daily streak',
+      body: userRole === 'teacher'
+        ? 'Review today\'s submissions to keep your class moving.'
+        : `${user.streak || 0} day streak. Come back tomorrow to keep it alive.`,
+    },
+  ];
+
+  const handleBellClick = () => {
+    setNotificationsOpen(open => !open);
+    onNotificationClick?.();
+  };
 
   return (
     <header className="relative h-[76px] border-b border-borderColor bg-bgCard/90 backdrop-blur-md sticky top-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-all">
@@ -142,14 +168,49 @@ export default function Header({
         )}
 
         {/* Notifications */}
+        <div className="relative">
+          <button
+            onClick={handleBellClick}
+            className="w-9 h-9 rounded-lg border border-borderColor flex items-center justify-center relative hover:bg-bgSecondary transition-colors"
+            title="Notifications"
+            aria-expanded={notificationsOpen}
+            aria-label="Notifications"
+          >
+            <IconBell size={15} className="text-textSecondary" />
+            {hasUnread && (
+              <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-accentIndigo" />
+            )}
+          </button>
+
+          {notificationsOpen && (
+            <div className="absolute right-0 top-[calc(100%+10px)] w-[300px] max-w-[calc(100vw-24px)] rounded-lg border border-borderColor bg-bgCard shadow-modal z-[70] p-3 animate-fadeIn">
+              <div className="flex items-center justify-between pb-2 border-b border-borderColor">
+                <p className="text-[12px] font-bold text-textPrimary">Notifications</p>
+                <span className="text-[10px] font-semibold text-textMuted uppercase tracking-wide">Today</span>
+              </div>
+              <div className="pt-2 space-y-2">
+                {notifications.map(item => (
+                  <div key={item.title} className="rounded-md bg-bgSecondary/70 border border-borderColor p-3">
+                    <p className="text-[12px] font-semibold text-textPrimary">{item.title}</p>
+                    <p className="text-[11px] text-textMuted mt-1 leading-relaxed">{item.body}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Theme toggle */}
         <button
-          onClick={onNotificationClick}
-          className="w-9 h-9 rounded-lg border border-borderColor flex items-center justify-center relative hover:bg-bgSecondary transition-colors"
-          title="Notifications"
+          onClick={onToggleTheme}
+          className="w-9 h-9 rounded-lg border border-borderColor flex items-center justify-center hover:bg-bgSecondary transition-colors"
+          title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+          aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
-          <IconBell size={15} className="text-textSecondary" />
-          {hasUnread && (
-            <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-accentIndigo" />
+          {isDark ? (
+            <IconSun size={15} className="text-textSecondary" />
+          ) : (
+            <IconMoon size={15} className="text-textSecondary" />
           )}
         </button>
 
@@ -158,23 +219,68 @@ export default function Header({
 
         {/* Auth / Account widget */}
         {isLoggedIn ? (
-          <div className="flex items-center gap-3.5">
-            <Avatar initials={user.initials || 'TR'} size="sm" />
-            <div className="hidden sm:flex flex-col">
-              <span className="text-[12px] font-semibold text-textPrimary leading-none truncate max-w-[80px]">
-                {user.name.split(' ')[0]}
-              </span>
-              <span className="text-[9px] text-textMuted mt-0.5">
-                {userRole === 'teacher' ? 'Faculty' : `Lv.${user.level}`}
-              </span>
-            </div>
+          <div
+            className="relative"
+            onMouseEnter={() => setAccountOpen(true)}
+            onMouseLeave={() => setAccountOpen(false)}
+          >
             <button
-              onClick={onLogout}
-              className="p-2 rounded-md text-textMuted hover:text-accentCrimson hover:bg-accentCrimson/5 transition-all"
-              title="Sign Out"
+              type="button"
+              onClick={() => setAccountOpen(open => !open)}
+              className="flex items-center gap-3.5 rounded-lg px-1.5 py-1 hover:bg-bgSecondary transition-colors"
+              aria-expanded={accountOpen}
+              aria-label="Account menu"
             >
-              <IconLogOut size={14} />
+              <Avatar initials={user.initials || 'TR'} size="sm" />
+              <div className="hidden sm:flex flex-col text-left">
+                <span className="text-[12px] font-semibold text-textPrimary leading-none truncate max-w-[80px]">
+                  {user.name.split(' ')[0]}
+                </span>
+                <span className="text-[9px] text-textMuted mt-0.5">
+                  {userRole === 'teacher' ? 'Faculty' : `Lv.${user.level}`}
+                </span>
+              </div>
             </button>
+
+            {accountOpen && (
+              <div className="absolute right-0 top-[calc(100%+10px)] w-[280px] max-w-[calc(100vw-24px)] rounded-lg border border-borderColor bg-bgCard shadow-modal z-[70] p-4 animate-fadeIn">
+                <div className="flex items-center gap-3 pb-3 border-b border-borderColor">
+                  <Avatar initials={user.initials || 'TR'} size="md" />
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-bold text-textPrimary truncate">{user.name}</p>
+                    <p className="text-[11px] text-textMuted">{userRole === 'teacher' ? 'Faculty account' : 'Student account'}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 py-3">
+                  <div className="rounded-md bg-bgSecondary border border-borderColor p-3">
+                    <p className="text-[10px] text-textMuted font-semibold uppercase tracking-wide">Coins</p>
+                    <p className="text-[18px] text-textPrimary font-bold tabular-nums">{user.coins}</p>
+                  </div>
+                  <div className="rounded-md bg-bgSecondary border border-borderColor p-3">
+                    <p className="text-[10px] text-textMuted font-semibold uppercase tracking-wide">Streak</p>
+                    <p className="text-[18px] text-textPrimary font-bold tabular-nums">{user.streak || 0}d</p>
+                  </div>
+                  <div className="rounded-md bg-bgSecondary border border-borderColor p-3">
+                    <p className="text-[10px] text-textMuted font-semibold uppercase tracking-wide">XP</p>
+                    <p className="text-[18px] text-textPrimary font-bold tabular-nums">{user.xp || 0}</p>
+                  </div>
+                  <div className="rounded-md bg-bgSecondary border border-borderColor p-3">
+                    <p className="text-[10px] text-textMuted font-semibold uppercase tracking-wide">Level</p>
+                    <p className="text-[18px] text-textPrimary font-bold tabular-nums">{user.level || 0}</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={onLogout}
+                  className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[12px] font-semibold text-accentCrimson hover:bg-accentCrimson/5 transition-all"
+                  title="Sign Out"
+                >
+                  <IconLogOut size={14} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
           </div>
         ) : (
           <button

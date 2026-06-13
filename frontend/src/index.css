@@ -54,6 +54,18 @@
   --color-canvas:   #ffffff;
   --color-cream:    #fff8e0;
 
+  --app-bg-primary: 245 245 245;
+  --app-bg-secondary: 238 238 238;
+  --app-bg-card: 255 255 255;
+  --app-bg-card-hover: 250 250 250;
+  --app-bg-glass: 255 255 255;
+  --app-border-color: 229 231 235;
+  --app-border-hover: 199 199 199;
+  --app-text-primary: 31 31 31;
+  --app-text-secondary: 74 74 74;
+  --app-text-muted: 138 138 138;
+  --app-text-faint: 199 199 199;
+
   --radius-sm:   6px;
   --radius-md:   8px;
   --radius-lg:   12px;
@@ -65,6 +77,31 @@
 
   --transition: 0.15s ease;
   --transition-spring: 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --color-ink: #f5f5f5;
+  --color-steel: #a3a3a3;
+  --color-hairline: #2a2a2a;
+  --color-canvas: #111111;
+  --color-cream: #241b12;
+
+  --app-bg-primary: 16 16 16;
+  --app-bg-secondary: 31 31 31;
+  --app-bg-card: 22 22 22;
+  --app-bg-card-hover: 31 31 31;
+  --app-bg-glass: 22 22 22;
+  --app-border-color: 42 42 42;
+  --app-border-hover: 64 64 64;
+  --app-text-primary: 245 245 245;
+  --app-text-secondary: 214 214 214;
+  --app-text-muted: 163 163 163;
+  --app-text-faint: 96 96 96;
+
+  --shadow-card: 0 1px 2px rgba(0,0,0,0.32), 0 8px 24px rgba(0,0,0,0.24);
+  --shadow-hover: 0 2px 4px rgba(0,0,0,0.36), 0 12px 28px rgba(0,0,0,0.28);
+  --shadow-modal: 0 20px 64px rgba(0,0,0,0.48);
 }
 
 /* ─── Base ───────────────────────────────────────── */
@@ -357,3 +394,75 @@
 
 .animate-modal-in   { animation: modalIn 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
 .animate-overlay-in { animation: overlayIn 0.18s ease-out; }
+
+/* Dark theme overrides for custom component classes that use authored CSS. */
+:root[data-theme="dark"] body {
+  background: rgb(var(--app-bg-primary));
+  color: rgb(var(--app-text-primary));
+}
+
+:root[data-theme="dark"] .glass,
+:root[data-theme="dark"] .glass-strong {
+  background: rgba(22, 22, 22, 0.92);
+  border-color: rgb(var(--app-border-color));
+}
+
+:root[data-theme="dark"] .btn-secondary {
+  background: transparent;
+  color: rgb(var(--app-text-primary));
+  border-color: rgb(var(--app-border-hover));
+}
+:root[data-theme="dark"] .btn-secondary:hover,
+:root[data-theme="dark"] .btn-ghost:hover,
+:root[data-theme="dark"] .top-nav-item-idle:hover,
+:root[data-theme="dark"] .nav-item-idle:hover,
+:root[data-theme="dark"] .quiz-option-idle:hover,
+:root[data-theme="dark"] .lb-row-normal:hover {
+  background: rgb(var(--app-bg-secondary));
+  color: rgb(var(--app-text-primary));
+}
+
+:root[data-theme="dark"] .input {
+  background: rgb(var(--app-bg-card));
+  color: rgb(var(--app-text-primary));
+  border-color: rgb(var(--app-border-hover));
+}
+:root[data-theme="dark"] .input::placeholder { color: rgb(var(--app-text-faint)); }
+:root[data-theme="dark"] .input:disabled {
+  background: rgb(var(--app-bg-secondary));
+  color: rgb(var(--app-text-faint));
+}
+
+:root[data-theme="dark"] .pill-group,
+:root[data-theme="dark"] .badge-completed,
+:root[data-theme="dark"] .badge-closed {
+  background: rgb(var(--app-bg-secondary));
+  border-color: rgb(var(--app-border-color));
+}
+
+:root[data-theme="dark"] .pill-tab-active {
+  background: rgb(var(--app-bg-card));
+  color: rgb(var(--app-text-primary));
+  border-color: rgb(var(--app-border-color));
+}
+
+:root[data-theme="dark"] .pill-tab-idle,
+:root[data-theme="dark"] .top-nav-item-idle,
+:root[data-theme="dark"] .nav-item-idle {
+  color: rgb(var(--app-text-muted));
+}
+
+:root[data-theme="dark"] .divider,
+:root[data-theme="dark"] .progress-track {
+  border-color: rgb(var(--app-border-color));
+  background: rgb(var(--app-bg-secondary));
+}
+
+:root[data-theme="dark"] .heading-section {
+  color: rgb(var(--app-text-primary));
+}
+
+:root[data-theme="dark"] .shimmer {
+  background: linear-gradient(90deg, #1f1f1f 25%, #2a2a2a 50%, #1f1f1f 75%);
+  background-size: 200% 100%;
+}

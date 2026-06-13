@@ -70,6 +70,15 @@ const userSchema = new mongoose.Schema(
       default: 0,
       min: 0,
     },
+    streak: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
+    lastStreakLoginAt: {
+      type: Date,
+      default: null,
+    },
     lastDailyBonusClaimedAt: {
       type: Date,
       default: null,

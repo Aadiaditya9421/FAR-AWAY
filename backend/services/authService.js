@@ -22,6 +22,7 @@ function buildAuthPayload(user, refreshToken) {
       ...userData,
       coinsBalance: userData.coinsBalance ?? 0,
       totalCoinsEarned: userData.totalCoinsEarned ?? 0,
+      streak: userData.streak ?? 0,
     },
     accessToken: signAccessToken(user),
     refreshToken,
@@ -87,6 +88,22 @@ function splitGoogleName(profile) {
   };
 }
 
+function getUtcDayStart(date = new Date()) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
+}
+
+function isSameUtcDay(left, right) {
+  if (!left || !right) return false;
+  return getUtcDayStart(left).getTime() === getUtcDayStart(right).getTime();
+}
+
+function isPreviousUtcDay(left, right) {
+  if (!left || !right) return false;
+  const leftStart = getUtcDayStart(left).getTime();
+  const rightStart = getUtcDayStart(right).getTime();
+  return rightStart - leftStart === 24 * 60 * 60 * 1000;
+}
+
 async function addRefreshToken(user, refreshToken) {
   await User.findByIdAndUpdate(user._id, {
     $push: {
@@ -96,6 +113,32 @@ async function addRefreshToken(user, refreshToken) {
       },
     },
   });
+}
+
+async function recordDailyLogin(user) {
+  const now = new Date();
+  const lastLogin = user.lastStreakLoginAt;
+
+  if (isSameUtcDay(lastLogin, now)) {
+    return user;
+  }
+
+  const nextStreak = isPreviousUtcDay(lastLogin, now)
+    ? (user.streak || 0) + 1
+    : 1;
+
+  const updated = await User.findByIdAndUpdate(
+    user._id,
+    {
+      $set: {
+        streak: nextStreak,
+        lastStreakLoginAt: now,
+      },
+    },
+    { new: true },
+  );
+
+  return updated || user;
 }
 
 async function grantStartingCoins(user) {
@@ -141,8 +184,11 @@ export async function registerUser(payload) {
     skillAreas: payload.skillAreas || [],
     coinsBalance: 0,
     totalCoinsEarned: 0,
+    streak: 0,
+    lastStreakLoginAt: null,
     lastDailyBonusClaimedAt: null,
   });
+  user = await recordDailyLogin(user);
   user = await grantStartingCoins(user);
 
   const refreshToken = signRefreshToken(user);
@@ -167,10 +213,11 @@ export async function loginUser({ email, password }) {
     throw new AppError("Invalid email or password", 401, ERROR_CODES.AUTH_INVALID);
   }
 
+  const activeUser = await recordDailyLogin(user);
   const refreshToken = signRefreshToken(user);
-  await addRefreshToken(user, refreshToken);
+  await addRefreshToken(activeUser, refreshToken);
 
-  return buildAuthPayload(user, refreshToken);
+  return buildAuthPayload(activeUser, refreshToken);
 }
 
 export async function googleAuthUser({ credential, role = "student" }) {
@@ -203,10 +250,14 @@ export async function googleAuthUser({ credential, role = "student" }) {
       isVerified: true,
       coinsBalance: 0,
       totalCoinsEarned: 0,
+      streak: 0,
+      lastStreakLoginAt: null,
       lastDailyBonusClaimedAt: null,
     });
     isNewUser = true;
   }
+
+  user = await recordDailyLogin(user);
 
   if (isNewUser) {
     user = await grantStartingCoins(user);
@@ -309,6 +360,10 @@ export async function refreshAuthToken(refreshToken) {
   );
 
   return buildAuthPayload(user, nextRefreshToken);
+}
+
+export async function recordCurrentUserLogin(user) {
+  return recordDailyLogin(user);
 }
 
 export async function logoutUser(userId, refreshToken) {

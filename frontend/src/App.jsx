@@ -5,6 +5,7 @@
 import { useState, useEffect } from 'react';
 // ── Auth ──
 import { useAuth } from './context/AuthContext';
+import LandingPage from './features/auth/LandingPage';
 import AuthPage   from './features/auth/AuthPage';
 import AuthModal  from './features/auth/AuthModal';
 
@@ -345,6 +346,18 @@ function toFiniteNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
+function hasResetTokenInUrl() {
+  if (typeof window === 'undefined') return false;
+  return new URLSearchParams(window.location.search).has('resetToken');
+}
+
+function getInitialThemeMode() {
+  if (typeof window === 'undefined') return 'light';
+  const saved = window.localStorage.getItem('far-away-theme');
+  if (saved === 'light' || saved === 'dark') return saved;
+  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
 function formatSubmissionDate(dateValue) {
   if (!dateValue) return 'Unknown date';
   return new Intl.DateTimeFormat(undefined, {
@@ -399,12 +412,19 @@ export default function App() {
 
   // Auth page tab: 'login' | 'register' (used when modal redirects to AuthPage)
   const [authView, setAuthView] = useState('login');
+  const [showLanding, setShowLanding] = useState(() => !hasResetTokenInUrl());
+  const [themeMode, setThemeMode] = useState(getInitialThemeMode);
 
   // When guest tries a gated action
   const [authModal, setAuthModal] = useState({ open: false });
 
   // Whether user chose to browse as guest (hides AuthPage)
   const [guestMode, setGuestMode] = useState(false);
+
+  useEffect(() => {
+    document.documentElement.dataset.theme = themeMode;
+    window.localStorage.setItem('far-away-theme', themeMode);
+  }, [themeMode]);
 
   // ───────────────────────────────────────────
   // APP STATE (with dynamic subjects and role sync)
@@ -969,12 +989,14 @@ export default function App() {
   const goToSignIn = () => {
     closeAuthModal();
     setGuestMode(false);
+    setShowLanding(false);
     setAuthView('login');
   };
 
   const goToRegister = () => {
     closeAuthModal();
     setGuestMode(false);
+    setShowLanding(false);
     setAuthView('register');
   };
 
@@ -985,6 +1007,7 @@ export default function App() {
     logout();
     setGuestMode(false);
     setAuthView('login');
+    setShowLanding(true);
   };
 
   const liveAssessments = subjects.flatMap(s => s.assessments);
@@ -1013,6 +1036,15 @@ export default function App() {
   }
 
   if (!isLoggedIn && !guestMode) {
+    if (showLanding) {
+      return (
+        <LandingPage
+          onSignIn={() => { setShowLanding(false); setAuthView('login'); }}
+          onRegister={() => { setShowLanding(false); setAuthView('register'); }}
+          onGuestBrowse={() => setGuestMode(true)}
+        />
+      );
+    }
     return <AuthPage onGuestBrowse={() => setGuestMode(true)} initialTab={authView} />;
   }
 
@@ -1029,15 +1061,16 @@ export default function App() {
         user={user}
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
-        onLogin={() => { setGuestMode(false); setAuthView('login'); }}
+        onLogin={() => { setGuestMode(false); setShowLanding(false); setAuthView('login'); }}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         hasUnread={hasUnread}
         onNotificationClick={() => {
           setHasUnread(false);
-          showToast('Welcome back! Solve quizzes to claim ranks.', 'info');
         }}
         onCoinClick={handleCoinClick}
+        themeMode={themeMode}
+        onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
         userRole={user.role}
       />
 

@@ -5,6 +5,7 @@ import {
   logoutUser,
   refreshAuthToken,
   requestPasswordReset,
+  recordCurrentUserLogin,
   resetPassword,
 } from "../services/authService.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
@@ -48,5 +49,6 @@ export async function refreshToken(req, res) {
 }
 
 export async function me(req, res) {
-  return sendSuccess(res, { message: "Current user", data: req.user });
+  const user = await recordCurrentUserLogin(req.user);
+  return sendSuccess(res, { message: "Current user", data: user });
 }
