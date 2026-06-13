@@ -252,7 +252,10 @@ export default function App() {
   const handleSubmitQuiz = (state = quizState) => {
     stopTimer();
 
-    const { assessment, answers } = state;
+    // If state is a DOM/React event, default to quizState
+    const actualState = (state && state.assessment) ? state : quizState;
+    const { assessment, answers } = actualState;
+    if (!assessment) return;
     const questions = assessment.questions;
     let correct = 0;
 
@@ -476,7 +479,7 @@ export default function App() {
               onToggleFlag={handleToggleFlag}
               onPrev={handleQuizPrev}
               onNext={handleQuizNav}
-              onSubmit={handleSubmitQuiz}
+              onSubmit={() => handleSubmitQuiz()}
             />
           )}
 

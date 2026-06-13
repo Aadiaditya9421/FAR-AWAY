@@ -1,7 +1,7 @@
 // src/features/auth/AuthPage.jsx
 // ─── Far Away — Login / Register (Cal.com + Mistral light design) ───
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { LogoMark, IconEye, IconEyeOff, IconLogIn, Spinner } from '../../components/ui/Icons';
 
@@ -37,7 +37,7 @@ function InputField({ label, type = 'text', value, onChange, placeholder, autoCo
   );
 }
 
-function LoginForm({ onSwitch, onGuestBrowse }) {
+function LoginForm({ onSwitch, onGuestBrowse, onSwitchToForgot }) {
   const { login } = useAuth();
   const [form, setForm]   = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
@@ -60,6 +60,12 @@ function LoginForm({ onSwitch, onGuestBrowse }) {
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
       <InputField label="Email address" type="email" value={form.email} onChange={set('email')} placeholder="you@university.edu" autoComplete="email" error={errors.email} />
       <InputField label="Password" type="password" value={form.password} onChange={set('password')} placeholder="Your password" autoComplete="current-password" error={errors.password} />
+
+      <div className="flex justify-end -mt-3 mb-1">
+        <button type="button" onClick={onSwitchToForgot} className="text-[12px] text-accentIndigo font-medium hover:underline">
+          Forgot password?
+        </button>
+      </div>
 
       <button type="submit" disabled={loading} className="btn-primary w-full justify-center gap-2 mt-1" style={{ height: '44px' }}>
         {loading ? <Spinner size={15} /> : <IconLogIn size={15} />}
@@ -154,8 +160,133 @@ function RegisterForm({ onSwitch, onGuestBrowse }) {
   );
 }
 
+function ForgotPasswordForm({ onSwitch }) {
+  const [email, setEmail] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!email) return setError('Email is required');
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Something went wrong');
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="flex flex-col gap-4 text-center py-4">
+        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h3 className="font-semibold text-textPrimary text-lg">Check your email</h3>
+        <p className="text-textMuted text-[13px] leading-relaxed">We sent a password reset link to <span className="font-medium text-textPrimary">{email}</span>.</p>
+        <button type="button" onClick={onSwitch} className="btn-secondary w-full justify-center mt-2" style={{ height: '44px' }}>Back to Sign in</button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <InputField label="Email address" type="email" value={email} onChange={e => {setEmail(e.target.value); setError('');}} placeholder="you@university.edu" autoComplete="email" error={error} />
+      <button type="submit" disabled={loading} className="btn-primary w-full justify-center gap-2 mt-1" style={{ height: '44px' }}>
+        {loading ? <Spinner size={15} /> : null}
+        {loading ? 'Sending link…' : 'Send Reset Link'}
+      </button>
+      <div className="divider" />
+      <div className="flex flex-col gap-2 text-center">
+        <button type="button" onClick={onSwitch} className="text-[13px] text-textMuted hover:text-textSecondary transition-colors">
+          Back to Sign in
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function ResetPasswordForm({ token, onSwitch }) {
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const handleSubmit = async e => {
+    e.preventDefault();
+    if (!password) return setError('Password is required');
+    if (password.length < 6) return setError('Minimum 6 characters');
+    if (password !== confirmPassword) return setError('Passwords do not match');
+    
+    setLoading(true);
+    setError('');
+    
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Something went wrong');
+      setSuccess(true);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (success) {
+    return (
+      <div className="flex flex-col gap-4 text-center py-4">
+        <div className="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-2">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+        <h3 className="font-semibold text-textPrimary text-lg">Password Reset!</h3>
+        <p className="text-textMuted text-[13px]">Your password has been successfully updated.</p>
+        <button type="button" onClick={onSwitch} className="btn-primary w-full justify-center mt-2" style={{ height: '44px' }}>Go to Sign in</button>
+      </div>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <InputField label="New Password" type="password" value={password} onChange={e => {setPassword(e.target.value); setError('');}} placeholder="Minimum 6 characters" autoComplete="new-password" error={error} />
+      <InputField label="Confirm Password" type="password" value={confirmPassword} onChange={e => {setConfirmPassword(e.target.value); setError('');}} placeholder="Repeat new password" autoComplete="new-password" />
+      <button type="submit" disabled={loading} className="btn-primary w-full justify-center gap-2 mt-1" style={{ height: '44px' }}>
+        {loading ? <Spinner size={15} /> : null}
+        {loading ? 'Resetting password…' : 'Reset Password'}
+      </button>
+    </form>
+  );
+}
+
 export default function AuthPage({ onGuestBrowse }) {
   const [tab, setTab] = useState('login');
+  const [resetToken, setResetToken] = useState(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (token) {
+      setResetToken(token);
+      setTab('reset-password');
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-bgPrimary flex items-center justify-center relative">
@@ -221,33 +352,39 @@ export default function AuthPage({ onGuestBrowse }) {
 
           <div className="mb-6">
             <h2 className="font-sans font-bold text-[24px] text-textPrimary tracking-tight mb-1">
-              {tab === 'login' ? 'Welcome back' : 'Create your account'}
+              {tab === 'login' ? 'Welcome back' : 
+               tab === 'register' ? 'Create your account' :
+               tab === 'forgot-password' ? 'Reset your password' :
+               'Choose a new password'}
             </h2>
             <p className="text-[13px] text-textMuted">
-              {tab === 'login'
-                ? 'Sign in to access your assessments and dashboard'
-                : 'Join thousands of students on Far Away'}
+              {tab === 'login' ? 'Sign in to access your assessments and dashboard' :
+               tab === 'register' ? 'Join thousands of students on Far Away' :
+               tab === 'forgot-password' ? 'Enter your email to receive a reset link' :
+               'Almost there! Enter your new password below.'}
             </p>
           </div>
 
           {/* Tab switcher (Cal.com nav-pill-group style) */}
-          <div className="pill-group mb-6">
-            <button type="button" onClick={() => setTab('login')}
-              className={tab === 'login' ? 'pill-tab-active flex-1 text-center' : 'pill-tab-idle flex-1 text-center'}>
-              Sign In
-            </button>
-            <button type="button" onClick={() => setTab('register')}
-              className={tab === 'register' ? 'pill-tab-active flex-1 text-center' : 'pill-tab-idle flex-1 text-center'}>
-              Register
-            </button>
-          </div>
+          {(tab === 'login' || tab === 'register') && (
+            <div className="pill-group mb-6">
+              <button type="button" onClick={() => setTab('login')}
+                className={tab === 'login' ? 'pill-tab-active flex-1 text-center' : 'pill-tab-idle flex-1 text-center'}>
+                Sign In
+              </button>
+              <button type="button" onClick={() => setTab('register')}
+                className={tab === 'register' ? 'pill-tab-active flex-1 text-center' : 'pill-tab-idle flex-1 text-center'}>
+                Register
+              </button>
+            </div>
+          )}
 
           {/* Form card */}
           <div className="bg-bgCard border border-borderColor rounded-xl p-7" style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
-            {tab === 'login'
-              ? <LoginForm onSwitch={() => setTab('register')} onGuestBrowse={onGuestBrowse} />
-              : <RegisterForm onSwitch={() => setTab('login')} onGuestBrowse={onGuestBrowse} />
-            }
+            {tab === 'login' && <LoginForm onSwitch={() => setTab('register')} onSwitchToForgot={() => setTab('forgot-password')} onGuestBrowse={onGuestBrowse} />}
+            {tab === 'register' && <RegisterForm onSwitch={() => setTab('login')} onGuestBrowse={onGuestBrowse} />}
+            {tab === 'forgot-password' && <ForgotPasswordForm onSwitch={() => setTab('login')} />}
+            {tab === 'reset-password' && <ResetPasswordForm token={resetToken} onSwitch={() => setTab('login')} />}
           </div>
 
           <p className="text-center text-[11px] text-textMuted mt-5">
