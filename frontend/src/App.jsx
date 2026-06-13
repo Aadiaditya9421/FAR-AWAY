@@ -276,6 +276,10 @@ function groupAssessmentsIntoSubjects(assessmentsList = []) {
       availabilityStatus: a.availabilityStatus || 'open',
       scheduleLabel: formatScheduleWindow(a.availableFrom, a.availableTo),
       assignment: a.assignment || { mode: 'all' },
+      hasSubmitted: Boolean(a.hasSubmitted),
+      submissionStatus: a.submissionStatus || (a.hasSubmitted ? 'completed' : 'not_started'),
+      submittedAt: a.submittedAt || null,
+      lastScore: a.lastScore ?? null,
     });
   });
 
@@ -995,6 +999,11 @@ export default function App() {
 
   // Quiz: Start (GATED)
   const handleStartQuiz = guarded(async (assessment) => {
+    if (assessment?.hasSubmitted || assessment?.submissionStatus === 'completed') {
+      showToast('You have already submitted this assessment. Each test can be attempted only once.', 'warning');
+      return;
+    }
+
     try {
       showToast('Loading quiz questions...', 'info');
       const res = await AssessmentService.questions(assessment.id);
@@ -1020,7 +1029,7 @@ export default function App() {
       handleTabChange('quiz');
     } catch (err) {
       console.error('Failed to load quiz questions:', err);
-      showToast('Failed to start quiz. Please try again.', 'error');
+      showToast(err.message || 'Failed to start quiz. Please try again.', 'error');
     }
   });
 

@@ -72,8 +72,22 @@ function assertCanStartAssessment(assessment, user) {
   }
 }
 
-export function assertAssessmentCanStart(assessment, user) {
+async function getExistingStudentSubmission(assessmentId, userId) {
+  return Submission.findOne({ assessmentId, userId }).select("_id score createdAt");
+}
+
+export async function assertAssessmentCanStart(assessment, user) {
   assertCanStartAssessment(assessment, user);
+  if (!user || isStaff(user)) return;
+
+  const existingSubmission = await getExistingStudentSubmission(assessment._id, user._id);
+  if (existingSubmission) {
+    throw new AppError(
+      "You have already submitted this assessment. Each student can attempt a test only once.",
+      409,
+      ERROR_CODES.CONFLICT,
+    );
+  }
 }
 
 function studentAssignmentFilter(user) {
@@ -98,12 +112,17 @@ function studentAssignmentFilter(user) {
   return { $or: clauses };
 }
 
-function decorateAssessment(assessment, user) {
+function decorateAssessment(assessment, user, submission = null) {
   const raw = assessment.toObject ? assessment.toObject() : assessment;
+  const hasSubmitted = Boolean(submission);
   return {
     ...raw,
     availabilityStatus: getAvailabilityStatus(raw),
     assignedToCurrentUser: user?.role === "student" ? isAssignedToStudent(raw, user) : true,
+    hasSubmitted,
+    submissionStatus: hasSubmitted ? "completed" : "not_started",
+    submittedAt: submission?.createdAt || null,
+    lastScore: submission?.score ?? null,
   };
 }
 
@@ -126,7 +145,21 @@ export async function listAssessments(query, user) {
     Assessment.countDocuments(filter),
   ]);
 
-  return { items: items.map((item) => decorateAssessment(item, user)), meta: buildPaginationMeta(total, page, limit) };
+  let submissionByAssessmentId = new Map();
+  if (user?.role === "student" && items.length) {
+    const submissions = await Submission.find({
+      userId: user._id,
+      assessmentId: { $in: items.map((item) => item._id) },
+    }).select("assessmentId score createdAt");
+    submissionByAssessmentId = new Map(
+      submissions.map((submission) => [submission.assessmentId.toString(), submission]),
+    );
+  }
+
+  return {
+    items: items.map((item) => decorateAssessment(item, user, submissionByAssessmentId.get(item._id.toString()))),
+    meta: buildPaginationMeta(total, page, limit),
+  };
 }
 
 export async function getAssessmentById(id, includeAnswers = false, user = null) {
@@ -361,7 +394,7 @@ export async function submitAssessment({ assessmentId, userId, answers, timeTake
   const user = await User.findById(userId).select("role batch branch");
   if (!user) throw new AppError("User not found", 404, ERROR_CODES.NOT_FOUND);
   const assessment = await getAssessmentById(assessmentId, true, user);
-  assertCanStartAssessment(assessment, user);
+  await assertAssessmentCanStart(assessment, user);
   
   let gradingQuestions = [];
   if (assessment.questionConfig?.isDynamic) {

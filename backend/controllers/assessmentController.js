@@ -27,7 +27,7 @@ export async function getAssessmentDetails(req, res) {
 
 export async function getAssessmentQuestions(req, res) {
   const assessment = await getAssessmentById(req.params.id, false, req.user);
-  assertAssessmentCanStart(assessment, req.user);
+  await assertAssessmentCanStart(assessment, req.user);
   
   let questions = [];
   if (assessment.questionConfig?.isDynamic) {

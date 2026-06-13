@@ -5,7 +5,7 @@ import { useMemo } from 'react';
 import {
   IconClock, IconBook, IconCode,
   IconDatabase, IconGlobe, IconServer, IconAtom,
-  IconTarget, IconChevronRight, IconCoin,
+  IconTarget, IconChevronRight, IconCoin, IconCheck,
 } from '../../components/ui/Icons';
 import Avatar from '../../components/ui/Avatar';
 import Badge from '../../components/ui/Badge';
@@ -104,7 +104,8 @@ function AssignmentBadge({ assignment }) {
 
 function AssessmentRow({ assessment, onStart, subjectColor }) {
   const windowStatus = getWindowStatus(assessment);
-  const isLocked = windowStatus !== 'open';
+  const isCompleted = assessment.hasSubmitted || assessment.submissionStatus === 'completed';
+  const isLocked = isCompleted || windowStatus !== 'open';
   const isClosed = windowStatus === 'closed';
   const timeLeft = windowStatus === 'upcoming' ? formatTimeLeft(assessment.availableFrom) : null;
 
@@ -140,13 +141,20 @@ function AssessmentRow({ assessment, onStart, subjectColor }) {
               </Badge>
             )}
             <AssignmentBadge assignment={assessment.assignment} />
+            {isCompleted && (
+              <Badge className="bg-accentEmerald/10 text-accentEmerald border border-accentEmerald/20 font-semibold">
+                Completed
+              </Badge>
+            )}
           </div>
           <p className="text-[12px] text-textMuted leading-snug line-clamp-2">
             {assessment.desc || 'Teacher-assigned timed assessment.'}
           </p>
           <p className="text-[11px] text-textMuted mt-1 flex items-center gap-1.5">
             <IconClock size={11} />
-            {formatScheduleLabel(assessment)}
+            {isCompleted
+              ? `Submitted${assessment.lastScore !== null ? ` · Score ${assessment.lastScore}%` : ''}`
+              : formatScheduleLabel(assessment)}
           </p>
         </div>
       </div>
@@ -168,7 +176,12 @@ function AssessmentRow({ assessment, onStart, subjectColor }) {
         </div>
 
         <div className="w-full sm:w-auto">
-          {isClosed ? (
+          {isCompleted ? (
+            <span className="badge-open text-[11px] flex items-center justify-center sm:justify-start gap-1.5">
+              <IconCheck size={11} />
+              Completed
+            </span>
+          ) : isClosed ? (
             <span className="badge-closed text-[11px] block text-center sm:inline-block">Closed</span>
           ) : isLocked ? (
             <span className="badge-upcoming text-[11px] flex items-center justify-center sm:justify-start gap-1.5">
@@ -209,10 +222,11 @@ function LearningPathsPanel({ subjects, onStart }) {
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
         {subjects.map(subject => {
           const SubjectIcon = SUBJECT_ICONS[subject.icon] || IconBook;
-          const openAssessment = subject.assessments.find(item => getWindowStatus(item) === 'open');
-          const nextAssessment = subject.assessments.find(item => getWindowStatus(item) === 'upcoming');
+          const openAssessment = subject.assessments.find(item => getWindowStatus(item) === 'open' && !item.hasSubmitted);
+          const nextAssessment = subject.assessments.find(item => getWindowStatus(item) === 'upcoming' && !item.hasSubmitted);
           const firstAssessment = openAssessment || nextAssessment || subject.assessments[0];
           const canStart = Boolean(openAssessment);
+          const completedCount = subject.assessments.filter(item => item.hasSubmitted).length;
 
           return (
             <div key={subject.id} className="p-4 rounded-lg border border-borderColor bg-bgSecondary/25 flex flex-col gap-4">
@@ -227,7 +241,7 @@ function LearningPathsPanel({ subjects, onStart }) {
                   <p className="font-display font-semibold text-sm text-textPrimary">{subject.shortName}</p>
                   <p className="text-[11px] text-textMuted line-clamp-1">{subject.name}</p>
                   <p className="text-[10px] text-textMuted mt-1">
-                    {subject.assessments.length} assessment{subject.assessments.length !== 1 ? 's' : ''}
+                    {completedCount}/{subject.assessments.length} completed
                   </p>
                 </div>
               </div>
@@ -241,7 +255,7 @@ function LearningPathsPanel({ subjects, onStart }) {
                 ].join(' ')}
                 style={canStart ? { background: subject.accentColor, borderColor: subject.accentColor } : undefined}
               >
-                {canStart ? 'Start Path' : firstAssessment ? 'Scheduled' : 'No Tests'}
+                {canStart ? 'Start Path' : firstAssessment ? completedCount === subject.assessments.length ? 'Completed' : 'Scheduled' : 'No Tests'}
               </button>
             </div>
           );
@@ -261,8 +275,9 @@ function SubjectSection({ subject, onStart, searchQuery }) {
 
   if (filtered.length === 0 && searchQuery) return null;
 
-  const openCount = filtered.filter(item => getWindowStatus(item) === 'open').length;
+  const openCount = filtered.filter(item => getWindowStatus(item) === 'open' && !item.hasSubmitted).length;
   const upcomingCount = filtered.filter(item => getWindowStatus(item) === 'upcoming').length;
+  const completedCount = filtered.filter(item => item.hasSubmitted).length;
 
   return (
     <section className="mb-8">
@@ -290,6 +305,12 @@ function SubjectSection({ subject, onStart, searchQuery }) {
             <span className="badge-open flex items-center gap-1.5">
               <span className="live-dot w-1.5 h-1.5" />
               {openCount} Open
+            </span>
+          )}
+          {completedCount > 0 && (
+            <span className="badge-open flex items-center gap-1.5">
+              <IconCheck size={11} />
+              {completedCount} Completed
             </span>
           )}
           {upcomingCount > 0 && (
@@ -334,7 +355,7 @@ function SubjectSection({ subject, onStart, searchQuery }) {
 
 export default function AssessmentsView({ subjects, onStart, searchQuery }) {
   const openCount = useMemo(() =>
-    subjects.reduce((acc, subject) => acc + subject.assessments.filter(item => getWindowStatus(item) === 'open').length, 0),
+    subjects.reduce((acc, subject) => acc + subject.assessments.filter(item => getWindowStatus(item) === 'open' && !item.hasSubmitted).length, 0),
   [subjects]);
 
   const totalAssessments = useMemo(() =>
