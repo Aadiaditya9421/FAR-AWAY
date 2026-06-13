@@ -355,7 +355,7 @@ function getInitialThemeMode() {
   if (typeof window === 'undefined') return 'light';
   const saved = window.localStorage.getItem('far-away-theme');
   if (saved === 'light' || saved === 'dark') return saved;
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  return 'light';
 }
 
 function formatSubmissionDate(dateValue) {
@@ -1042,10 +1042,19 @@ export default function App() {
           onSignIn={() => { setShowLanding(false); setAuthView('login'); }}
           onRegister={() => { setShowLanding(false); setAuthView('register'); }}
           onGuestBrowse={() => setGuestMode(true)}
+          themeMode={themeMode}
+          onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
         />
       );
     }
-    return <AuthPage onGuestBrowse={() => setGuestMode(true)} initialTab={authView} />;
+    return (
+      <AuthPage
+        onGuestBrowse={() => setGuestMode(true)}
+        initialTab={authView}
+        themeMode={themeMode}
+        onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
+      />
+    );
   }
 
   // ───────────────────────────────────────────

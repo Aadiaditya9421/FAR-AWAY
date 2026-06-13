@@ -1,6 +1,8 @@
 import {
   LogoMark,
   IconCode,
+  IconMoon,
+  IconSun,
   IconTrophy,
   IconTarget,
   IconZap,
@@ -32,7 +34,15 @@ const FEATURES = [
   },
 ];
 
-export default function LandingPage({ onSignIn, onRegister, onGuestBrowse }) {
+export default function LandingPage({
+  onSignIn,
+  onRegister,
+  onGuestBrowse,
+  themeMode = 'light',
+  onToggleTheme,
+}) {
+  const isDark = themeMode === 'dark';
+
   return (
     <div className="min-h-screen bg-bgPrimary text-textPrimary">
       <section
@@ -55,6 +65,15 @@ export default function LandingPage({ onSignIn, onRegister, onGuestBrowse }) {
           <div className="flex items-center gap-2">
             <button
               type="button"
+              onClick={onToggleTheme}
+              className="flex h-10 w-10 items-center justify-center rounded-md border border-white/20 bg-white/10 text-white hover:bg-white/15 transition-colors"
+              title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            >
+              {isDark ? <IconSun size={17} /> : <IconMoon size={17} />}
+            </button>
+            <button
+              type="button"
               onClick={onSignIn}
               className="rounded-md px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 transition-colors"
             >
@@ -65,7 +84,7 @@ export default function LandingPage({ onSignIn, onRegister, onGuestBrowse }) {
               onClick={onRegister}
               className="rounded-md bg-accentIndigo px-4 py-2 text-sm font-semibold text-white hover:bg-accentViolet transition-colors"
             >
-              Create Account
+              Create
             </button>
           </div>
         </header>

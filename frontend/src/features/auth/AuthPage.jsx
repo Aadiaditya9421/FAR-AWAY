@@ -3,7 +3,15 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
-import { LogoMark, IconEye, IconEyeOff, IconLogIn, Spinner } from '../../components/ui/Icons';
+import {
+  LogoMark,
+  IconEye,
+  IconEyeOff,
+  IconLogIn,
+  IconMoon,
+  IconSun,
+  Spinner,
+} from '../../components/ui/Icons';
 import { forgotPasswordRequest, resetPasswordRequest } from '../../services';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
@@ -421,10 +429,16 @@ function ResetPasswordForm({ token, onBack, onComplete }) {
   );
 }
 
-export default function AuthPage({ onGuestBrowse, initialTab = 'login' }) {
+export default function AuthPage({
+  onGuestBrowse,
+  initialTab = 'login',
+  themeMode = 'light',
+  onToggleTheme,
+}) {
   const [tab, setTab] = useState(initialTab);
   const [resetToken, setResetToken] = useState(() => new URLSearchParams(window.location.search).get('resetToken') || '');
   const [flow, setFlow] = useState(() => resetToken ? 'reset' : 'auth');
+  const isDark = themeMode === 'dark';
 
   const returnToAuth = (nextTab = 'login') => {
     setFlow('auth');
@@ -457,10 +471,23 @@ export default function AuthPage({ onGuestBrowse, initialTab = 'login' }) {
       {/* Mistral sunset stripe at top */}
       <div className="fixed top-0 left-0 right-0 sunset-stripe z-50" />
 
+      <button
+        type="button"
+        onClick={onToggleTheme}
+        className="fixed right-5 top-5 z-[60] flex h-10 w-10 items-center justify-center rounded-md border border-borderColor bg-bgCard text-textSecondary shadow-card hover:bg-bgSecondary transition-colors"
+        title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+      >
+        {isDark ? <IconSun size={17} /> : <IconMoon size={17} />}
+      </button>
+
       {/* Decorative cream band left */}
       <div
         className="fixed left-0 top-0 bottom-0 w-[42%] hidden lg:block"
-        style={{ background: 'linear-gradient(160deg, #fff8e0 0%, #fffaeb 60%, #f5f5f5 100%)' }}
+        style={{
+          background:
+            'linear-gradient(160deg, var(--color-cream) 0%, rgb(var(--app-bg-card)) 60%, rgb(var(--app-bg-primary)) 100%)',
+        }}
       >
         {/* Left panel content */}
         <div className="flex flex-col justify-between h-full p-12">
