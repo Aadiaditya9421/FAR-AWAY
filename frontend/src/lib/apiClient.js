@@ -4,7 +4,9 @@
 // - Stores JWT access/refresh tokens in localStorage.
 // - Transparently refreshes the access token once on a 401, then retries.
 
-const API_BASE = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/$/, '');
+import { normalizeApiBase } from './apiUrl';
+
+const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
 const ACCESS_KEY = 'fa_access_token';
 const REFRESH_KEY = 'fa_refresh_token';

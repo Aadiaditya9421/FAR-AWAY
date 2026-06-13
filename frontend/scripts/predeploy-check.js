@@ -71,14 +71,28 @@ function checkApiUrl() {
     return;
   }
 
+  if (apiUrl.startsWith("/")) {
+    const message = "VITE_API_URL is a relative path other than /api. Use /api or an HTTPS backend URL.";
+    strict ? addBlocker(message) : addWarn(message);
+    return;
+  }
+
+  if (!/^https?:\/\//i.test(apiUrl)) {
+    const message = "VITE_API_URL is missing https://. Use the full Railway API URL including /api.";
+    strict ? addBlocker(message) : addWarn(message);
+    return;
+  }
+
   if (!apiUrl.startsWith("https://")) {
-    addWarn("VITE_API_URL is not HTTPS. Use HTTPS for global deployment.");
+    const message = "VITE_API_URL is not HTTPS. Use HTTPS for global deployment.";
+    strict ? addBlocker(message) : addWarn(message);
   } else {
     addPass("VITE_API_URL is HTTPS.");
   }
 
   if (!apiUrl.endsWith("/api")) {
-    addWarn("VITE_API_URL should usually include the /api suffix.");
+    const message = "VITE_API_URL must include the /api suffix for this frontend.";
+    strict ? addBlocker(message) : addWarn(message);
   }
 }
 

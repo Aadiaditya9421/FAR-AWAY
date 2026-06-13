@@ -1,9 +1,9 @@
 import { io } from 'socket.io-client';
 import { getAccessToken } from './apiClient';
+import { getSocketHost } from './apiUrl';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
-// Strip trailing slash and '/api' to get the socket host
-const SOCKET_HOST = API_URL.replace(/\/api\/?$/, '').replace(/\/$/, '');
+const SOCKET_HOST = getSocketHost(API_URL);
 
 let rootSocket = null;
 let leaderboardSocket = null;
