@@ -340,6 +340,11 @@ function getInitials(name) {
     .toUpperCase() || 'ST';
 }
 
+function toFiniteNumber(value, fallback = 0) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 function formatSubmissionDate(dateValue) {
   if (!dateValue) return 'Unknown date';
   return new Intl.DateTimeFormat(undefined, {
@@ -434,11 +439,11 @@ export default function App() {
         name: authUser.name,
         initials: authUser.name.split(' ').map(x => x[0]).join('').toUpperCase(),
         role: authUser.role || 'student',
-        coins: authUser.coinsBalance ?? prev.coins,
-        streak: authUser.streak ?? 0,
-        rank: authUser.rank ?? 0,
-        xp: authUser.xp ?? 0,
-        level: authUser.level ?? 0,
+        coins: toFiniteNumber(authUser.coinsBalance, 0),
+        streak: toFiniteNumber(authUser.streak, 0),
+        rank: toFiniteNumber(authUser.rank, 0),
+        xp: toFiniteNumber(authUser.xp, 0),
+        level: toFiniteNumber(authUser.level, 0),
         skillAreas: authUser.skillAreas || [],
       }));
       setActiveTab(authUser.role === 'teacher' ? 'class-progress' : 'dashboard');

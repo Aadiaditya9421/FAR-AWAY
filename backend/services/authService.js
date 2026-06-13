@@ -14,8 +14,13 @@ const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
 let googleClient;
 
 function buildAuthPayload(user, refreshToken) {
+  const userData = user.toJSON();
   return {
-    user: user.toJSON(),
+    user: {
+      ...userData,
+      coinsBalance: userData.coinsBalance ?? 0,
+      totalCoinsEarned: userData.totalCoinsEarned ?? 0,
+    },
     accessToken: signAccessToken(user),
     refreshToken,
   };
@@ -119,6 +124,9 @@ export async function registerUser(payload) {
     batch: payload.batch || "",
     branch: payload.branch || "",
     skillAreas: payload.skillAreas || [],
+    coinsBalance: 0,
+    totalCoinsEarned: 0,
+    lastDailyBonusClaimedAt: null,
   });
 
   const refreshToken = signRefreshToken(user);
@@ -176,6 +184,9 @@ export async function googleAuthUser({ credential, role = "student" }) {
       profilePicture: profile.picture,
       emailVerified: true,
       isVerified: true,
+      coinsBalance: 0,
+      totalCoinsEarned: 0,
+      lastDailyBonusClaimedAt: null,
     });
   }
 
