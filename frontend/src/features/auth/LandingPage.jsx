@@ -1,42 +1,93 @@
 import {
   LogoMark,
+  IconArrowsSwap,
+  IconAward,
+  IconCheck,
   IconCode,
+  IconCoin,
   IconMoon,
   IconSun,
-  IconTrophy,
   IconTarget,
+  IconTrophy,
+  IconUser,
   IconZap,
 } from '../../components/ui/Icons';
 
 const HERO_IMAGE =
   'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1800&q=80';
 
-const FEATURES = [
+const HOW_IT_WORKS = [
   {
-    title: 'Adaptive assessments',
-    body: 'Practice from a question bank that responds to topic, difficulty, and mastery signals.',
+    step: '01',
+    title: 'Create your account',
+    body: 'Join as a student or faculty member and keep your learning progress, coins, and streaks live.',
+  },
+  {
+    step: '02',
+    title: 'Take adaptive assessments',
+    body: 'Solve question-bank driven quizzes that adjust by topic, difficulty, and mastery signals.',
+  },
+  {
+    step: '03',
+    title: 'Improve with insights',
+    body: 'Use AI summaries, practice sets, competitions, and peer swaps to keep moving forward.',
+  },
+];
+
+const LEARNING_FEATURES = [
+  {
     Icon: IconTarget,
+    problem: 'Struggling with one-size-fits-all learning?',
+    solution: 'Adaptive Assessments',
+    description:
+      'Questions respond to your topic history, mastery, and difficulty level while the core scoring stays deterministic.',
+    benefits: ['Real-time difficulty signals', 'Bayesian mastery tracking', 'Anti-repeat question selection'],
   },
   {
-    title: 'Live competitions',
-    body: 'Run skill arenas with coins, rankings, entry fees, and real-time leaderboard updates.',
     Icon: IconTrophy,
+    problem: 'Learning feels low-energy without competition?',
+    solution: 'Live Competitions and Leaderboards',
+    description:
+      'Compete with peers in live arenas, climb ranked boards, and use coin pools to make practice feel active.',
+    benefits: ['Live scoring updates', 'Individual and class contests', 'Coin-based prize pools'],
   },
   {
-    title: 'AI learning support',
-    body: 'Get hints, explanations, study notes, and weakness summaries without putting AI in grading.',
     Icon: IconZap,
+    problem: 'Not sure what to focus on next?',
+    solution: 'AI Learning Insights',
+    description:
+      'Get personalized weakness summaries, misconception explanations, targeted practice, and study notes.',
+    benefits: ['Topic recommendations', 'Misconception mapping', 'AI-generated study notes'],
   },
   {
-    title: 'Coding practice',
-    body: 'Solve coding problems and receive structured feedback from the integrated tutor flow.',
+    Icon: IconArrowsSwap,
+    problem: 'Need help from people learning beside you?',
+    solution: 'SkillSwap Peer Learning',
+    description:
+      'Connect with classmates and friends to exchange skills. Teach what you know and learn from students who understand your weak topics.',
+    benefits: ['Student-to-student swaps', 'Friend and classmate learning', 'No role hierarchy'],
+  },
+  {
     Icon: IconCode,
+    problem: 'Need coding practice with useful feedback?',
+    solution: 'Code Practice and Review',
+    description:
+      'Write code in an online editor, run submissions, and use structured review feedback to improve your approach.',
+    benefits: ['Monaco editor', 'Run and submit flow', 'Structured code feedback'],
+  },
+  {
+    Icon: IconCoin,
+    problem: 'Want a reason to return every day?',
+    solution: 'Coins, Streaks, and Achievements',
+    description:
+      'Start with welcome coins, keep a daily streak alive, and earn rewards through assessments, contests, and swaps.',
+    benefits: ['Welcome coins', 'Daily streaks', 'Achievement progress'],
   },
 ];
 
 export default function LandingPage({
   onSignIn,
-  onRegister,
+  onGetStarted,
   onGuestBrowse,
   themeMode = 'light',
   onToggleTheme,
@@ -46,14 +97,14 @@ export default function LandingPage({
   return (
     <div className="min-h-screen bg-bgPrimary text-textPrimary">
       <section
-        className="relative min-h-[88vh] overflow-hidden bg-surfaceDark text-white"
+        className="relative min-h-[92vh] overflow-hidden bg-surfaceDark text-white"
         style={{
-          backgroundImage: `linear-gradient(90deg, rgba(16,16,16,0.88) 0%, rgba(16,16,16,0.68) 46%, rgba(16,16,16,0.20) 100%), url(${HERO_IMAGE})`,
+          backgroundImage: `linear-gradient(90deg, rgba(16,16,16,0.90) 0%, rgba(16,16,16,0.70) 46%, rgba(16,16,16,0.22) 100%), url(${HERO_IMAGE})`,
           backgroundSize: 'cover',
           backgroundPosition: 'center',
         }}
       >
-        <header className="relative z-10 flex items-center justify-between px-5 py-5 sm:px-8 lg:px-12">
+        <header className="relative z-10 flex items-center justify-between gap-3 px-4 py-5 sm:px-8 lg:px-12">
           <div className="flex items-center gap-3">
             <LogoMark size={34} />
             <div>
@@ -75,35 +126,35 @@ export default function LandingPage({
             <button
               type="button"
               onClick={onSignIn}
-              className="rounded-md px-4 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 transition-colors"
+              className="rounded-md px-3 py-2 text-sm font-semibold text-white/85 hover:bg-white/10 transition-colors sm:px-4"
             >
               Sign In
             </button>
             <button
               type="button"
-              onClick={onRegister}
-              className="rounded-md bg-accentIndigo px-4 py-2 text-sm font-semibold text-white hover:bg-accentViolet transition-colors"
+              onClick={onGetStarted}
+              className="rounded-md bg-accentIndigo px-3 py-2 text-sm font-semibold text-white hover:bg-accentViolet transition-colors sm:px-4"
             >
-              Create
+              Start
             </button>
           </div>
         </header>
 
-        <div className="relative z-10 flex min-h-[calc(88vh-76px)] items-center px-5 pb-16 sm:px-8 lg:px-12">
+        <div className="relative z-10 flex min-h-[calc(92vh-76px)] items-center px-5 pb-20 sm:px-8 lg:px-12">
           <div className="max-w-3xl">
             <p className="mb-4 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/75 backdrop-blur">
-              Class assessments, competitions, and AI guidance
+              Personalized learning, powered by adaptive practice
             </p>
             <h1 className="text-5xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl">
               Far Away
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/78 sm:text-xl">
-              A deployment-ready learning arena where students practice, compete, earn coins, and receive live mastery feedback.
+              Adapt to your pace, compete with peers, exchange skills with students, and master topics faster with live insights.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                onClick={onRegister}
+                onClick={onGetStarted}
                 className="btn-primary justify-center"
               >
                 Get Started Free
@@ -136,26 +187,83 @@ export default function LandingPage({
       </section>
 
       <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 lg:px-12">
-        <div className="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-accentIndigo">Built for repeated practice</p>
-            <h2 className="mt-2 text-3xl font-bold text-textPrimary">Everything opens into the real app.</h2>
-          </div>
-          <button type="button" onClick={onSignIn} className="btn-secondary self-start sm:self-auto">
-            Continue to Sign In
-          </button>
+        <div className="mb-8 text-center">
+          <p className="text-xs font-bold uppercase tracking-wide text-accentIndigo">How it works</p>
+          <h2 className="mt-2 text-3xl font-bold text-textPrimary sm:text-4xl">Three steps to start learning smarter</h2>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          {FEATURES.map(({ title, body, Icon }) => (
-            <article key={title} className="card p-5">
-              <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-md border border-borderColor bg-bgSecondary text-accentIndigo">
-                <Icon size={18} />
-              </div>
-              <h3 className="text-lg font-bold text-textPrimary">{title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-textMuted">{body}</p>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          {HOW_IT_WORKS.map(item => (
+            <article key={item.step} className="card p-5">
+              <p className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-accentIndigo/20 bg-accentIndigo/10 text-sm font-bold text-accentIndigo">
+                {item.step}
+              </p>
+              <h3 className="text-lg font-bold text-textPrimary">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-textMuted">{item.body}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="border-y border-borderColor bg-bgCard">
+        <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 lg:px-12">
+          <div className="mb-8 text-center">
+            <p className="text-xs font-bold uppercase tracking-wide text-accentIndigo">Features that help you learn</p>
+            <h2 className="mt-2 text-3xl font-bold text-textPrimary sm:text-4xl">Everything you need to master your skills</h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+            {LEARNING_FEATURES.map(feature => (
+              <FeatureCard key={feature.solution} {...feature} />
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="mx-auto max-w-6xl px-5 py-14 sm:px-8 lg:px-12">
+        <div className="grid grid-cols-1 items-center gap-8 md:grid-cols-[1.1fr_0.9fr]">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-accentIndigo">For teachers</p>
+            <h2 className="mt-2 text-3xl font-bold text-textPrimary sm:text-4xl">Run assessments without losing the learning signal.</h2>
+            <p className="mt-4 text-sm leading-relaxed text-textMuted sm:text-base">
+              Create static or dynamic adaptive tests, review class progress, organize competitions, and give feedback without mixing AI into grading.
+            </p>
+            <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {[
+                'Create adaptive lab tests',
+                'Review class analytics',
+                'Organize competitions',
+                'Provide submission feedback',
+              ].map(item => (
+                <div key={item} className="flex items-center gap-2 rounded-md border border-borderColor bg-bgCard p-3">
+                  <IconCheck size={15} className="text-accentEmerald" />
+                  <span className="text-sm font-semibold text-textSecondary">{item}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="rounded-lg border border-borderColor bg-bgCard p-6 shadow-card">
+            <div className="flex h-14 w-14 items-center justify-center rounded-md bg-accentIndigo/10 text-accentIndigo">
+              <IconAward size={24} />
+            </div>
+            <h3 className="mt-5 text-xl font-bold text-textPrimary">Empower your classroom</h3>
+            <p className="mt-2 text-sm leading-relaxed text-textMuted">
+              Keep assessment logic predictable while giving students visible progress, rewards, and practical next steps.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-t border-borderColor bg-bgCard">
+        <div className="mx-auto max-w-6xl px-5 py-12 text-center sm:px-8 lg:px-12">
+          <IconUser size={28} className="mx-auto mb-4 text-accentIndigo" />
+          <h2 className="text-3xl font-bold text-textPrimary">Ready to learn smarter?</h2>
+          <p className="mx-auto mt-3 max-w-2xl text-sm leading-relaxed text-textMuted">
+            Start with adaptive practice, live competitions, and peer learning built for students and teachers.
+          </p>
+          <button type="button" onClick={onGetStarted} className="btn-primary mt-6 justify-center">
+            Get Started Free
+          </button>
         </div>
       </section>
 
@@ -163,5 +271,36 @@ export default function LandingPage({
         Far Away Learning Platform. Student and faculty portal.
       </footer>
     </div>
+  );
+}
+
+function FeatureCard({ Icon, problem, solution, description, benefits }) {
+  return (
+    <article className="card overflow-hidden">
+      <div className="grid grid-cols-1 md:grid-cols-[0.95fr_1.05fr]">
+        <div className="border-b border-borderColor bg-bgSecondary p-5 md:border-b-0 md:border-r">
+          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-md border border-borderColor bg-bgCard text-accentIndigo">
+            <Icon size={20} />
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-wide text-textMuted">Problem</p>
+          <h3 className="mt-2 text-lg font-bold leading-snug text-textPrimary">{problem}</h3>
+        </div>
+
+        <div className="p-5">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-accentIndigo">Solution</p>
+          <h3 className="mt-2 text-lg font-bold text-textPrimary">{solution}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-textMuted">{description}</p>
+
+          <div className="mt-4 flex flex-col gap-2">
+            {benefits.map(benefit => (
+              <div key={benefit} className="flex items-center gap-2 text-xs font-semibold text-textSecondary">
+                <span className="h-1.5 w-1.5 rounded-full bg-accentIndigo" />
+                <span>{benefit}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </article>
   );
 }

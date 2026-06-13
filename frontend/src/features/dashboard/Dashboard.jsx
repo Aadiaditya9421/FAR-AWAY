@@ -3,7 +3,7 @@ import StatsRow from './StatsRow';
 import LearningPath from './LearningPath';
 import SkillsChart from './SkillsChart';
 import SpotlightCard from './SpotlightCard';
-import MentorshipPanel from './MentorshipPanel';
+import PeerLearningPanel from './PeerLearningPanel';
 import AIInsightsCard from './AIInsightsCard';
 import TargetedPracticeCard from './TargetedPracticeCard';
 
@@ -80,7 +80,7 @@ export default function Dashboard({
             competition={liveComp}
             onRegister={onRegisterComp}
           />
-          <MentorshipPanel
+          <PeerLearningPanel
             matches={skillSwap.matches}
             recommended={skillSwap.recommended}
             onGoToSkillSwap={onGoToSkillSwap}

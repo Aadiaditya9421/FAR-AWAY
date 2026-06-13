@@ -3,7 +3,7 @@ import { body } from "express-validator";
 import {
   acceptRequest,
   declineRequest,
-  getRecommendedMentors,
+  getRecommendedPeers,
   getRequests,
   postRequest,
 } from "../controllers/skillswapController.js";
@@ -16,7 +16,7 @@ const router = Router();
 
 router.use(authenticate);
 
-router.get("/recommended", asyncHandler(getRecommendedMentors));
+router.get("/recommended", asyncHandler(getRecommendedPeers));
 router.get("/requests", paginationValidator, validateRequest, asyncHandler(getRequests));
 router.post(
   "/request",

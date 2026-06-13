@@ -23,18 +23,18 @@ function skillTerms(value = "") {
   return new Set([normalized, ...(SKILL_ALIASES[normalized] || [])].filter(Boolean));
 }
 
-function skillMatchScore(teachSkill, targetTopic, mentorSkillAreas = []) {
+function skillMatchScore(teachSkill, targetTopic, peerSkillAreas = []) {
   const teach = normalizeSkill(teachSkill);
   const target = normalizeSkill(targetTopic);
   const teachTerms = skillTerms(teach);
   const targetTerms = skillTerms(target);
-  const mentorTerms = mentorSkillAreas.flatMap(area => [...skillTerms(area)]);
+  const peerTerms = peerSkillAreas.flatMap(area => [...skillTerms(area)]);
 
   if (!teach || !target) return 0;
   if (teach === target) return 1;
   if (teach.includes(target) || target.includes(teach)) return 0.9;
   if ([...teachTerms].some(term => targetTerms.has(term))) return 0.78;
-  if (mentorTerms.some(term => targetTerms.has(term))) return 0.62;
+  if (peerTerms.some(term => targetTerms.has(term))) return 0.62;
   return 0.15;
 }
 
@@ -43,19 +43,19 @@ function getDisplayName(user) {
   return [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email || "Peer";
 }
 
-function recommendationReason({ request, targetTopic, skillFit, mentorMastery, availabilityScore }) {
+function recommendationReason({ request, targetTopic, skillFit, peerMastery, availabilityScore }) {
   const reasons = [];
   if (skillFit >= 0.9) {
-    reasons.push(`Can directly mentor ${targetTopic}`);
+    reasons.push(`Can directly teach ${targetTopic}`);
   } else if (skillFit >= 0.6) {
     reasons.push(`Has adjacent skills for ${targetTopic}`);
   } else {
     reasons.push("Nearest available peer while stronger matches are scarce");
   }
 
-  if (skillFit >= 0.6 && mentorMastery >= 0.75) {
+  if (skillFit >= 0.6 && peerMastery >= 0.75) {
     reasons.push(`Shows strong ${targetTopic} mastery`);
-  } else if (skillFit >= 0.6 && mentorMastery >= 0.5) {
+  } else if (skillFit >= 0.6 && peerMastery >= 0.5) {
     reasons.push(`Has workable ${targetTopic} background`);
   }
 
@@ -88,7 +88,7 @@ export async function listSkillSwapRequests(userId, query) {
   return { items, meta: buildPaginationMeta(total, page, limit) };
 }
 
-export async function recommendSkillSwapMentors(userId, query = {}) {
+export async function recommendSkillSwapPeers(userId, query = {}) {
   const limit = Math.max(1, Math.min(10, Number(query.limit) || 5));
 
   const progress = await UserProgress.find({ userId }).sort({ mastery: 1, updatedAt: -1 });
@@ -117,27 +117,27 @@ export async function recommendSkillSwapMentors(userId, query = {}) {
 
   const requesterIds = [...new Set(requests.map(request => request.requester?._id?.toString()).filter(Boolean))];
   const topicNames = [...new Set(weakTopics.map(item => item.topic))];
-  const mentorProgress = await UserProgress.find({
+  const peerProgress = await UserProgress.find({
     userId: { $in: requesterIds },
     topic: { $in: topicNames },
   });
 
   const masteryByUserAndTopic = new Map(
-    mentorProgress.map(item => [`${item.userId.toString()}::${normalizeSkill(item.topic)}`, item.mastery]),
+    peerProgress.map(item => [`${item.userId.toString()}::${normalizeSkill(item.topic)}`, item.mastery]),
   );
 
   return requests
     .map(request => {
       const requesterId = request.requester?._id?.toString();
-      const mentorSkillAreas = request.requester?.skillAreas || [];
+      const peerSkillAreas = request.requester?.skillAreas || [];
       const target = weakTopics
         .map(topic => {
-          const skillFit = skillMatchScore(request.teachSkill, topic.topic, mentorSkillAreas);
+          const skillFit = skillMatchScore(request.teachSkill, topic.topic, peerSkillAreas);
           return { ...topic, skillFit };
         })
         .sort((a, b) => b.skillFit - a.skillFit)[0];
 
-      const mentorMastery = masteryByUserAndTopic.get(`${requesterId}::${normalizeSkill(target.topic)}`)
+      const peerMastery = masteryByUserAndTopic.get(`${requesterId}::${normalizeSkill(target.topic)}`)
         ?? (target.skillFit >= 0.6 ? 0.65 : 0.45);
       const availabilityScore = request.scheduledAt
         ? new Date(request.scheduledAt).getTime() >= Date.now() ? 1 : 0.4
@@ -145,24 +145,25 @@ export async function recommendSkillSwapMentors(userId, query = {}) {
       const ratingScore = 1; // Placeholder until peer ratings are introduced.
       const score = (
         target.skillFit * 0.55
-        + mentorMastery * 0.30
+        + peerMastery * 0.30
         + availabilityScore * 0.10
         + ratingScore * 0.05
       );
+      const peer = {
+        id: request.requester?._id,
+        name: getDisplayName(request.requester),
+        skillAreas: peerSkillAreas,
+      };
 
       return {
         request,
-        mentor: {
-          id: request.requester?._id,
-          name: getDisplayName(request.requester),
-          skillAreas: mentorSkillAreas,
-        },
+        peer,
         targetTopic: target.topic,
         targetMastery: Math.round((target.mastery || 0.25) * 100),
         score: Math.round(score * 100),
         scoreBreakdown: {
           skillFit: Math.round(target.skillFit * 100),
-          mentorMastery: Math.round(mentorMastery * 100),
+          peerMastery: Math.round(peerMastery * 100),
           availability: Math.round(availabilityScore * 100),
           rating: Math.round(ratingScore * 100),
         },
@@ -170,7 +171,7 @@ export async function recommendSkillSwapMentors(userId, query = {}) {
           request,
           targetTopic: target.topic,
           skillFit: target.skillFit,
-          mentorMastery,
+          peerMastery,
           availabilityScore,
         }),
       };

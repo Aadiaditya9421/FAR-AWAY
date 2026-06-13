@@ -3,7 +3,7 @@ import {
   createSkillSwapRequest,
   declineSkillSwapRequest,
   listSkillSwapRequests,
-  recommendSkillSwapMentors,
+  recommendSkillSwapPeers,
 } from "../services/skillswapService.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
 
@@ -12,9 +12,9 @@ export async function getRequests(req, res) {
   return sendSuccess(res, { message: "SkillSwap requests retrieved", data: items, meta });
 }
 
-export async function getRecommendedMentors(req, res) {
-  const items = await recommendSkillSwapMentors(req.user._id, req.query);
-  return sendSuccess(res, { message: "Recommended SkillSwap mentors retrieved", data: items });
+export async function getRecommendedPeers(req, res) {
+  const items = await recommendSkillSwapPeers(req.user._id, req.query);
+  return sendSuccess(res, { message: "Recommended SkillSwap peers retrieved", data: items });
 }
 
 export async function postRequest(req, res) {

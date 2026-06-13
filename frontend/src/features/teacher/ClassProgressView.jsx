@@ -17,7 +17,7 @@ function buildLocalStudyNote(selectedAttempt) {
   if (wrongQs.length === 0) {
     return `Hi ${selectedAttempt.studentName.split(' ')[0]},
 
-Fantastic job on completing the ${selectedAttempt.testTitle}! You achieved a perfect score of 100%. Your understanding of these concepts is exemplary. For next steps, I recommend exploring advanced topics or acting as a peer mentor in SkillSwap to help others solidify their understanding.
+Fantastic job on completing the ${selectedAttempt.testTitle}! You achieved a perfect score of 100%. Your understanding of these concepts is exemplary. For next steps, I recommend exploring advanced topics or helping classmates through SkillSwap peer sessions.
 
 Keep up the great work!`;
   }
@@ -32,7 +32,7 @@ ${topicsToReview}
 
 Study Tips:
 - Review our textbook section regarding these specific issues.
-- Try booking a 30-minute mentoring session in the SkillSwap panel with classmates who excel in this area.
+- Try arranging a 30-minute SkillSwap peer session with classmates who excel in this area.
 
 Let me know if you want to schedule a brief call during office hours to go over the solutions together. You are close to mastering this!`;
 }

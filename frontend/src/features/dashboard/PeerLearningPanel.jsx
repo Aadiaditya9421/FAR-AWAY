@@ -1,9 +1,9 @@
-// src/features/dashboard/MentorshipPanel.jsx
+// src/features/dashboard/PeerLearningPanel.jsx
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
 import { IconArrowsSwap, IconUser } from '../../components/ui/Icons';
 
-export default function MentorshipPanel({ matches, recommended = [], onGoToSkillSwap }) {
+export default function PeerLearningPanel({ matches, recommended = [], onGoToSkillSwap }) {
   const activeMatches = matches.filter(m => m.matched);
   const topRecommendation = recommended[0];
 
@@ -13,7 +13,7 @@ export default function MentorshipPanel({ matches, recommended = [], onGoToSkill
         <div className="flex items-center gap-2">
           <IconArrowsSwap size={15} className="text-accentIndigo" />
           <h4 className="font-display font-semibold text-sm text-textPrimary">
-            Active Mentorships
+            Peer Learning
           </h4>
         </div>
         {activeMatches.length > 0 && (
@@ -30,7 +30,7 @@ export default function MentorshipPanel({ matches, recommended = [], onGoToSkill
           {topRecommendation ? (
             <>
               <p className="text-[11px] text-textMuted leading-relaxed mb-2">
-                Recommended mentor for {topRecommendation.targetTopic}:
+                Suggested peer for {topRecommendation.targetTopic}:
               </p>
               <div className="w-full p-3 rounded-lg bg-accentAmber/5 border border-accentAmber/15 mb-3 text-left">
                 <div className="flex items-center justify-between gap-2">
@@ -44,7 +44,7 @@ export default function MentorshipPanel({ matches, recommended = [], onGoToSkill
             </>
           ) : (
             <p className="text-[11px] text-textMuted leading-relaxed mb-3">
-              No active connections yet. Find peers in SkillSwap to start learning together.
+              No active peer connections yet. Find classmates in SkillSwap to start learning together.
             </p>
           )}
           <Button variant="ghost" size="sm" onClick={onGoToSkillSwap}>

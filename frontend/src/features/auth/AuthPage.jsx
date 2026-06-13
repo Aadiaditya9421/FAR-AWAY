@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import {
   LogoMark,
+  IconArrowLeft,
   IconEye,
   IconEyeOff,
   IconLogIn,
@@ -432,6 +433,7 @@ function ResetPasswordForm({ token, onBack, onComplete }) {
 export default function AuthPage({
   onGuestBrowse,
   initialTab = 'login',
+  onBackToLanding,
   themeMode = 'light',
   onToggleTheme,
 }) {
@@ -470,6 +472,15 @@ export default function AuthPage({
     <div className="min-h-screen bg-bgPrimary flex items-center justify-center relative">
       {/* Mistral sunset stripe at top */}
       <div className="fixed top-0 left-0 right-0 sunset-stripe z-50" />
+
+      <button
+        type="button"
+        onClick={onBackToLanding}
+        className="fixed left-5 top-5 z-[60] flex h-10 items-center gap-2 rounded-md border border-borderColor bg-bgCard px-3 text-xs font-semibold text-textSecondary shadow-card hover:bg-bgSecondary transition-colors"
+      >
+        <IconArrowLeft size={14} />
+        <span className="hidden sm:inline">Landing</span>
+      </button>
 
       <button
         type="button"

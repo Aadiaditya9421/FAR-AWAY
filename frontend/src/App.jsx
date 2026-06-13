@@ -268,11 +268,12 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
 
   const recommended = recommendationsList.map(item => {
     const request = item.request || {};
-    const peerName = item.mentor?.name || getDisplayName(request.requester);
+    const suggestedPeer = item.peer || {};
+    const peerName = suggestedPeer.name || getDisplayName(request.requester);
 
     return {
       id: request._id || request.id,
-      requesterId: request.requester?._id || request.requester || item.mentor?.id,
+      requesterId: request.requester?._id || request.requester || suggestedPeer.id,
       name: peerName,
       give: request.teachSkill,
       take: request.learnSkill,
@@ -346,9 +347,42 @@ function toFiniteNumber(value, fallback = 0) {
   return Number.isFinite(parsed) ? parsed : fallback;
 }
 
-function hasResetTokenInUrl() {
-  if (typeof window === 'undefined') return false;
-  return new URLSearchParams(window.location.search).has('resetToken');
+function getInitialAuthScreen() {
+  if (typeof window === 'undefined') return { showLanding: true, authView: 'login' };
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('resetToken')) return { showLanding: false, authView: 'login' };
+
+  const auth = params.get('auth');
+  if (auth === 'login' || auth === 'register') {
+    return { showLanding: false, authView: auth };
+  }
+
+  return { showLanding: true, authView: 'login' };
+}
+
+function writeAuthUrl(view, mode = 'push') {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('resetToken');
+  url.searchParams.set('auth', view);
+  window.history[mode === 'replace' ? 'replaceState' : 'pushState'](
+    null,
+    '',
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
+function writeLandingUrl(mode = 'push') {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('auth');
+  url.searchParams.delete('resetToken');
+  window.history[mode === 'replace' ? 'replaceState' : 'pushState'](
+    null,
+    '',
+    `${url.pathname}${url.search}${url.hash}`,
+  );
 }
 
 function getInitialThemeMode() {
@@ -410,9 +444,11 @@ export default function App() {
   // ─── Auth ───
   const { isLoggedIn, authUser, initializing, logout, refreshUser } = useAuth();
 
+  const initialAuthScreen = getInitialAuthScreen();
+
   // Auth page tab: 'login' | 'register' (used when modal redirects to AuthPage)
-  const [authView, setAuthView] = useState('login');
-  const [showLanding, setShowLanding] = useState(() => !hasResetTokenInUrl());
+  const [authView, setAuthView] = useState(initialAuthScreen.authView);
+  const [showLanding, setShowLanding] = useState(initialAuthScreen.showLanding);
   const [themeMode, setThemeMode] = useState(getInitialThemeMode);
 
   // When guest tries a gated action
@@ -425,6 +461,18 @@ export default function App() {
     document.documentElement.dataset.theme = themeMode;
     window.localStorage.setItem('far-away-theme', themeMode);
   }, [themeMode]);
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (isLoggedIn || guestMode) return;
+      const next = getInitialAuthScreen();
+      setAuthView(next.authView);
+      setShowLanding(next.showLanding);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [guestMode, isLoggedIn]);
 
   // ───────────────────────────────────────────
   // APP STATE (with dynamic subjects and role sync)
@@ -539,7 +587,7 @@ export default function App() {
             assessmentsData,
             competitionsData,
             skillSwapData,
-            recommendedMentorsData,
+            recommendedPeersData,
           ] = coreData;
 
           const [progressResult, insightsResult, practiceSetResult] = analyticsData;
@@ -547,7 +595,7 @@ export default function App() {
 
           setSubjects(groupAssessmentsIntoSubjects(assessmentsData));
           setCompetitions(mapCompetitions(competitionsData, authUserId));
-          setSkillSwap(mapSkillSwap(skillSwapData, authUserId, recommendedMentorsData));
+          setSkillSwap(mapSkillSwap(skillSwapData, authUserId, recommendedPeersData));
           if (progressResult.status === 'fulfilled' && progressResult.value?.progress) {
             setProgress(progressResult.value.progress);
           }
@@ -829,11 +877,11 @@ export default function App() {
 
   const refreshSkillSwapState = async () => {
     const authUserId = authUser._id || authUser.id;
-    const [skillSwapData, recommendedMentorsData] = await Promise.all([
+    const [skillSwapData, recommendedPeersData] = await Promise.all([
       SkillSwapService.requests(),
       SkillSwapService.recommended().catch(() => []),
     ]);
-    setSkillSwap(mapSkillSwap(skillSwapData, authUserId, recommendedMentorsData));
+    setSkillSwap(mapSkillSwap(skillSwapData, authUserId, recommendedPeersData));
   };
 
   // SkillSwap handlers (GATED)
@@ -986,18 +1034,28 @@ export default function App() {
   // ───────────────────────────────────────────
   const closeAuthModal = () => setAuthModal({ open: false });
 
+  const openAuthPage = (view = 'login', mode = 'push') => {
+    setGuestMode(false);
+    setAuthView(view);
+    setShowLanding(false);
+    writeAuthUrl(view, mode);
+  };
+
+  const openLandingPage = (mode = 'push') => {
+    setGuestMode(false);
+    setAuthView('login');
+    setShowLanding(true);
+    writeLandingUrl(mode);
+  };
+
   const goToSignIn = () => {
     closeAuthModal();
-    setGuestMode(false);
-    setShowLanding(false);
-    setAuthView('login');
+    openAuthPage('login');
   };
 
   const goToRegister = () => {
     closeAuthModal();
-    setGuestMode(false);
-    setShowLanding(false);
-    setAuthView('register');
+    openAuthPage('register');
   };
 
   // ───────────────────────────────────────────
@@ -1005,9 +1063,7 @@ export default function App() {
   // ───────────────────────────────────────────
   const handleLogout = () => {
     logout();
-    setGuestMode(false);
-    setAuthView('login');
-    setShowLanding(true);
+    openLandingPage('replace');
   };
 
   const liveAssessments = subjects.flatMap(s => s.assessments);
@@ -1039,8 +1095,8 @@ export default function App() {
     if (showLanding) {
       return (
         <LandingPage
-          onSignIn={() => { setShowLanding(false); setAuthView('login'); }}
-          onRegister={() => { setShowLanding(false); setAuthView('register'); }}
+          onSignIn={() => openAuthPage('login')}
+          onGetStarted={() => openAuthPage('register')}
           onGuestBrowse={() => setGuestMode(true)}
           themeMode={themeMode}
           onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
@@ -1051,6 +1107,7 @@ export default function App() {
       <AuthPage
         onGuestBrowse={() => setGuestMode(true)}
         initialTab={authView}
+        onBackToLanding={() => openLandingPage()}
         themeMode={themeMode}
         onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
       />
@@ -1070,7 +1127,7 @@ export default function App() {
         user={user}
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
-        onLogin={() => { setGuestMode(false); setShowLanding(false); setAuthView('login'); }}
+        onLogin={() => openAuthPage('login')}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
         hasUnread={hasUnread}

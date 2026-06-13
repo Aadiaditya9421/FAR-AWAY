@@ -41,18 +41,15 @@ export default function SkillSwapView({
 
   return (
     <div className="animate-fadeIn">
-
-      {/* ── Header ── */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
         <div>
           <h3 className="font-display font-bold text-2xl text-textPrimary tracking-tight">
             SkillSwap Peer Network
           </h3>
           <p className="text-sm text-textMuted mt-1">
-            Trade knowledge with peers — teach what you know, learn what you need.
+            Trade knowledge with friends, classmates, and other students.
           </p>
         </div>
-        {/* CTA */}
         <button
           onClick={() => setShowPostModal(true)}
           className="btn-primary w-full sm:w-auto flex-shrink-0 gap-1.5"
@@ -63,7 +60,6 @@ export default function SkillSwapView({
         </button>
       </div>
 
-      {/* ── How it works ── */}
       <div className="card p-4 mb-6 bg-accentIndigo/4 border-accentIndigo/20">
         <div className="flex items-start gap-3">
           <div className="w-8 h-8 rounded-full bg-accentIndigo/10 flex items-center justify-center flex-shrink-0 text-accentIndigo">
@@ -73,13 +69,12 @@ export default function SkillSwapView({
             <p className="text-xs font-display font-semibold text-textPrimary mb-1">How SkillSwap Works</p>
             <p className="text-[11px] text-textMuted leading-relaxed">
               Each peer offers a skill they can teach and one they want to learn.
-              When you match, you both commit to 30-minute sessions. No coins required — just knowledge!
+              When you match, both students commit to short peer sessions. No coins required, just knowledge.
             </p>
           </div>
         </div>
       </div>
 
-      {/* ── My Postings ── */}
       {myPostings.length > 0 && (
         <div className="mb-7">
           <div className="flex items-center gap-2 mb-3">
@@ -95,20 +90,16 @@ export default function SkillSwapView({
                 key={post.id}
                 className="card p-4 border-accentViolet/20 bg-accentViolet/4 flex items-start gap-4"
               >
-                {/* Skill pair */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full
-                                     bg-accentEmerald/12 text-accentEmerald border border-accentEmerald/20">
+                    <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full bg-accentEmerald/12 text-accentEmerald border border-accentEmerald/20">
                       Teach: {post.teach}
                     </span>
                     <span className="text-textFaint text-xs">to</span>
-                    <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full
-                                     bg-accentIndigo/12 text-accentIndigo border border-accentIndigo/20">
+                    <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full bg-accentIndigo/12 text-accentIndigo border border-accentIndigo/20">
                       Learn: {post.learn}
                     </span>
-                    <span className="ml-auto text-[10px] text-textMuted font-display font-semibold
-                                     flex items-center gap-1">
+                    <span className="ml-auto text-[10px] text-textMuted font-display font-semibold flex items-center gap-1">
                       <span className="live-dot w-1.5 h-1.5" /> Active
                     </span>
                   </div>
@@ -120,17 +111,14 @@ export default function SkillSwapView({
         </div>
       )}
 
-      {/* ── Main grid ── */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-        {/* Left: Peer Matches */}
         <div className="lg:col-span-2">
           {filteredRecommended.length > 0 && (
             <div className="mb-7">
               <div className="flex items-center gap-2 mb-3">
                 <IconUser size={15} className="text-accentAmber" />
                 <h4 className="font-display font-semibold text-sm text-textPrimary">
-                  Recommended Mentors
+                  Recommended Students
                   <span className="text-[10px] font-normal text-textMuted ml-1.5">
                     ranked by your weak topics
                   </span>
@@ -168,7 +156,6 @@ export default function SkillSwapView({
           )}
         </div>
 
-        {/* Right: Incoming Requests */}
         <div>
           <div className="flex items-center gap-2 mb-3">
             <IconBell size={15} className="text-accentIndigo" />
@@ -200,11 +187,9 @@ export default function SkillSwapView({
             </div>
           )}
 
-          {/* Post swap nudge when no postings yet */}
           {myPostings.length === 0 && (
             <div
-              className="mt-4 card p-4 border-dashed border-accentViolet/25 bg-accentViolet/4 text-center cursor-pointer
-                         hover:border-accentViolet/50 hover:bg-accentViolet/8 transition-all duration-200 flex flex-col items-center"
+              className="mt-4 card p-4 border-dashed border-accentViolet/25 bg-accentViolet/4 text-center cursor-pointer hover:border-accentViolet/50 hover:bg-accentViolet/8 transition-all duration-200 flex flex-col items-center"
               onClick={() => setShowPostModal(true)}
             >
               <IconArrowsSwap size={24} className="text-accentViolet mb-2 opacity-50" />
@@ -222,7 +207,6 @@ export default function SkillSwapView({
         </div>
       </div>
 
-      {/* ── Post Swap Modal ── */}
       <PostSwapModal
         isOpen={showPostModal}
         onClose={() => setShowPostModal(false)}
