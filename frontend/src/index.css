@@ -392,8 +392,74 @@
   to   { opacity: 1; }
 }
 
+@keyframes landingRise {
+  from { opacity: 0; transform: translateY(18px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes landingFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+@keyframes landingGlow {
+  0%, 100% { box-shadow: 0 0 0 rgba(250, 82, 15, 0); }
+  50% { box-shadow: 0 0 28px rgba(250, 82, 15, 0.24); }
+}
+
 .animate-modal-in   { animation: modalIn 0.28s cubic-bezier(0.16, 1, 0.3, 1); }
 .animate-overlay-in { animation: overlayIn 0.18s ease-out; }
+.animate-landing-rise { animation: landingRise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.animate-landing-float { animation: landingFloat 5s ease-in-out infinite; }
+.landing-stagger { animation: landingRise 0.55s cubic-bezier(0.16, 1, 0.3, 1) both; }
+.landing-glow { animation: landingGlow 3.5s ease-in-out infinite; }
+
+.landing-stat,
+.landing-feature-card {
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.landing-stat:hover,
+.landing-feature-card:hover,
+.landing-feature-card:focus-visible {
+  transform: translateY(-2px);
+  border-color: rgba(250, 82, 15, 0.35);
+  box-shadow: var(--shadow-hover);
+}
+
+.landing-feature-card-active {
+  border-color: rgba(250, 82, 15, 0.46);
+  box-shadow: 0 0 0 3px rgba(250, 82, 15, 0.08), var(--shadow-card);
+}
+
+.landing-feature-icon {
+  transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease;
+}
+
+.landing-feature-card:hover .landing-feature-icon,
+.landing-feature-card-active .landing-feature-icon {
+  transform: rotate(-4deg) scale(1.04);
+  background: rgba(250, 82, 15, 0.08);
+  border-color: rgba(250, 82, 15, 0.26);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-modal-in,
+  .animate-overlay-in,
+  .animate-landing-rise,
+  .animate-landing-float,
+  .landing-stagger,
+  .landing-glow,
+  .live-dot {
+    animation: none !important;
+  }
+
+  .landing-stat,
+  .landing-feature-card,
+  .landing-feature-icon {
+    transition: none !important;
+  }
+}
 
 /* Dark theme overrides for custom component classes that use authored CSS. */
 :root[data-theme="dark"] body {

@@ -79,12 +79,14 @@ export const LeaderboardService = {
 export const SkillSwapService = {
   requests: (query = '') => api.get(`/skillswap/requests${query}`, { auth: true }),
   recommended: (query = '') => api.get(`/skillswap/recommended${query}`, { auth: true }),
-  post: ({ teachSkill, learnSkill, receiverId, message, scheduledAt }) =>
-    api.post('/skillswap/request', { teachSkill, learnSkill, receiverId, message, scheduledAt }, { auth: true }),
+  post: ({ teachSkill, learnSkill, receiverId, message, scheduledAt, verificationProof }) =>
+    api.post('/skillswap/request', { teachSkill, learnSkill, receiverId, message, scheduledAt, verificationProof }, { auth: true }),
   accept: (id) => api.put(`/skillswap/accept/${id}`, {}, { auth: true }),
   decline: (id) => api.put(`/skillswap/decline/${id}`, {}, { auth: true }),
   cancel: (id) => api.put(`/skillswap/cancel/${id}`, {}, { auth: true }),
   complete: (id) => api.put(`/skillswap/complete/${id}`, {}, { auth: true }),
+  sendMessage: (id, message) => api.post(`/skillswap/message/${id}`, { message }, { auth: true }),
+  saveMeeting: (id, meetingUrl) => api.put(`/skillswap/meeting/${id}`, { meetingUrl }, { auth: true }),
 };
 
 /* ─────────────── Coins ─────────────── */

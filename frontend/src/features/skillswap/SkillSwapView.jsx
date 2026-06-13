@@ -3,9 +3,11 @@ import { useState } from 'react';
 import PeerCard from './PeerCard';
 import RequestCard from './RequestCard';
 import PostSwapModal from './PostSwapModal';
+import SwapRequestModal from './SwapRequestModal';
+import SwapSessionPanel from './SwapSessionPanel';
 import {
   IconPlus, IconArrowsSwap, IconGlobe,
-  IconSearch, IconBell, IconUser,
+  IconSearch, IconBell, IconUser, IconCheck,
 } from '../../components/ui/Icons';
 
 export default function SkillSwapView({
@@ -15,10 +17,14 @@ export default function SkillSwapView({
   onIgnore,
   onCancel,
   onComplete,
+  onSendMessage,
+  onSaveMeeting,
   onPostSwap,
   searchQuery,
 }) {
   const [showPostModal, setShowPostModal] = useState(false);
+  const [requestPeer, setRequestPeer] = useState(null);
+  const [activeSessionId, setActiveSessionId] = useState('');
 
   const filteredMatches = (skillSwap.matches || []).filter(m => {
     if (!searchQuery) return true;
@@ -40,6 +46,7 @@ export default function SkillSwapView({
   const pendingRequests = (skillSwap.requests || []).filter(r => r.status === 'pending').length;
   const myPostings = skillSwap.myPostings || [];
   const history = skillSwap.history || [];
+  const activeSession = activeSessionId ? history.find(item => item.id === activeSessionId) : null;
 
   const statusClass = status => ({
     pending: 'bg-accentAmber/10 text-accentAmber border-accentAmber/20',
@@ -56,6 +63,15 @@ export default function SkillSwapView({
     cancelled: 'Cancelled',
     completed: 'Completed',
   }[status] || status);
+
+  const openRequestModal = (peerId) => {
+    const peer = [...filteredMatches, ...filteredRecommended].find(item => item.id === peerId);
+    if (peer) setRequestPeer(peer);
+  };
+
+  const openSession = (item) => {
+    setActiveSessionId(item.id);
+  };
 
   return (
     <div className="animate-fadeIn">
@@ -120,6 +136,11 @@ export default function SkillSwapView({
                     <span className="ml-auto text-[10px] text-textMuted font-display font-semibold flex items-center gap-1">
                       <span className="live-dot w-1.5 h-1.5" /> Active
                     </span>
+                    {post.proof?.fileName && (
+                      <span className="text-[10px] font-display font-bold px-2 py-0.5 rounded-full bg-accentEmerald/12 text-accentEmerald border border-accentEmerald/20">
+                        Verified
+                      </span>
+                    )}
                   </div>
                   <p className="text-[11px] text-textMuted leading-relaxed">{post.msg}</p>
                 </div>
@@ -144,7 +165,7 @@ export default function SkillSwapView({
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {filteredRecommended.map(peer => (
-                  <PeerCard key={peer.id} peer={peer} onRequest={onRequestSwap} />
+                  <PeerCard key={peer.id} peer={peer} onRequest={openRequestModal} />
                 ))}
               </div>
             </div>
@@ -163,7 +184,7 @@ export default function SkillSwapView({
           {suggestedMatches.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {suggestedMatches.map(peer => (
-                <PeerCard key={peer.id} peer={peer} onRequest={onRequestSwap} />
+                <PeerCard key={peer.id} peer={peer} onRequest={openRequestModal} />
               ))}
             </div>
           ) : (
@@ -234,11 +255,26 @@ export default function SkillSwapView({
                           {item.direction} - {item.skill}
                         </p>
                         <p className="text-[11px] text-textMuted leading-relaxed mt-2">{item.msg}</p>
+                        {item.proof?.fileName && (
+                          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-accentEmerald/20 bg-accentEmerald/8 px-2 py-1 text-[10px] font-bold text-accentEmerald">
+                            <IconCheck size={11} />
+                            <span>{item.proof.proofType === 'certificate' ? 'Certificate' : 'Resume'} verified</span>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    {(item.canCancel || item.canComplete) && (
+                    {(item.canChat || item.canCancel || item.canComplete) && (
                       <div className="flex gap-2 mt-3 pt-3 border-t border-borderColor">
+                        {item.canChat && (
+                          <button
+                            type="button"
+                            onClick={() => openSession(item)}
+                            className="btn btn-secondary text-xs px-3 py-1.5 rounded flex-1"
+                          >
+                            Chat / Meet
+                          </button>
+                        )}
                         {item.canComplete && (
                           <button
                             type="button"
@@ -289,6 +325,17 @@ export default function SkillSwapView({
         isOpen={showPostModal}
         onClose={() => setShowPostModal(false)}
         onSubmit={onPostSwap}
+      />
+      <SwapRequestModal
+        peer={requestPeer}
+        onClose={() => setRequestPeer(null)}
+        onSubmit={onRequestSwap}
+      />
+      <SwapSessionPanel
+        session={activeSession}
+        onClose={() => setActiveSessionId('')}
+        onSendMessage={onSendMessage}
+        onSaveMeeting={onSaveMeeting}
       />
     </div>
   );

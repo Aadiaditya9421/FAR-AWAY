@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { IconArrowsSwap, IconX } from '../../components/ui/Icons';
+import { buildVerificationProof, proofTypeLabel, validateProofFile } from './proofUtils';
 
 const SKILL_SUGGESTIONS = [
   'React', 'Vue', 'Angular', 'TypeScript', 'JavaScript',
@@ -32,7 +33,7 @@ function SuggestionPills({ onPick }) {
 }
 
 export default function PostSwapModal({ isOpen, onClose, onSubmit }) {
-  const [form, setForm] = useState({ teach: '', learn: '', msg: '' });
+  const [form, setForm] = useState({ teach: '', learn: '', msg: '', proofType: 'resume', proofFile: null });
   const [errors, setErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
@@ -48,22 +49,41 @@ export default function PostSwapModal({ isOpen, onClose, onSubmit }) {
     if (!form.teach.trim()) e.teach = 'Required';
     if (!form.learn.trim()) e.learn = 'Required';
     if (!form.msg.trim())   e.msg   = 'Add a short message for potential matches';
+    const proofError = validateProofFile(form.proofFile);
+    if (proofError) e.proofFile = proofError;
     return e;
   };
 
-  const handleSubmit = (e) => {
+  const handleFileChange = (e) => {
+    const file = e.target.files?.[0] || null;
+    setForm(p => ({ ...p, proofFile: file }));
+    setErrors(p => ({ ...p, proofFile: validateProofFile(file) }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setSubmitting(true);
-    // Small artificial delay for tactile feedback
-    setTimeout(() => {
-      onSubmit({ teach: form.teach.trim(), learn: form.learn.trim(), msg: form.msg.trim() });
-      setForm({ teach: '', learn: '', msg: '' });
+    try {
+      const verificationProof = await buildVerificationProof({
+        file: form.proofFile,
+        proofType: form.proofType,
+      });
+      await onSubmit({
+        teach: form.teach.trim(),
+        learn: form.learn.trim(),
+        msg: form.msg.trim(),
+        verificationProof,
+      });
+      setForm({ teach: '', learn: '', msg: '', proofType: 'resume', proofFile: null });
       setErrors({});
-      setSubmitting(false);
       onClose();
-    }, 400);
+    } catch (err) {
+      setErrors(p => ({ ...p, proofFile: err.message || 'Could not attach proof.' }));
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleOverlayClick = (e) => {
@@ -186,6 +206,44 @@ export default function PostSwapModal({ isOpen, onClose, onSubmit }) {
               }
               <p className="text-[10px] text-textFaint ml-auto">{form.msg.length}/200</p>
             </div>
+          </div>
+
+          {/* Verification proof */}
+          <div className="rounded-lg border border-borderColor bg-bgSecondary/60 p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <label className="label-caps">
+                  Skill verification
+                  <span className="text-accentCrimson ml-0.5">*</span>
+                </label>
+                <p className="mt-1 text-[11px] text-textMuted leading-relaxed">
+                  Upload a resume PDF or certificate that supports the skill you can teach.
+                </p>
+              </div>
+              <select
+                className="input max-w-[150px] text-xs"
+                value={form.proofType}
+                onChange={e => setForm(p => ({ ...p, proofType: e.target.value }))}
+              >
+                <option value="resume">Resume</option>
+                <option value="certificate">Certificate</option>
+              </select>
+            </div>
+
+            <input
+              type="file"
+              accept="application/pdf,image/png,image/jpeg,image/webp"
+              onChange={handleFileChange}
+              className="mt-3 block w-full text-xs text-textMuted file:mr-3 file:rounded-md file:border file:border-borderColor file:bg-bgCard file:px-3 file:py-2 file:text-xs file:font-semibold file:text-textPrimary hover:file:bg-bgSecondary"
+            />
+            {form.proofFile && (
+              <p className="mt-2 text-[11px] font-semibold text-textSecondary">
+                {proofTypeLabel(form.proofType)} selected: {form.proofFile.name}
+              </p>
+            )}
+            {errors.proofFile && (
+              <p className="mt-2 text-[10px] text-accentCrimson font-medium">{errors.proofFile}</p>
+            )}
           </div>
 
           {/* Actions */}

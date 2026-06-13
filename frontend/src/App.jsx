@@ -278,6 +278,34 @@ function getEntityId(value) {
   return String(value._id || value.id || value);
 }
 
+function mapVerificationProof(proof = {}) {
+  if (!proof?.fileName) return null;
+  return {
+    proofType: proof.proofType || 'resume',
+    fileName: proof.fileName,
+    mimeType: proof.mimeType,
+    fileSize: proof.fileSize,
+    status: proof.status || 'submitted',
+    uploadedAt: proof.uploadedAt,
+  };
+}
+
+function mapChatMessages(messages = [], authId = '') {
+  return messages.map((message, index) => {
+    const senderId = getEntityId(message.sender);
+    const senderName = getDisplayName(message.sender);
+    return {
+      id: message._id || message.id || `${senderId}-${message.createdAt || index}`,
+      senderId,
+      senderName,
+      avatar: getInitials(senderName),
+      body: message.body || '',
+      createdAt: message.createdAt,
+      mine: senderId === authId,
+    };
+  });
+}
+
 function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
   const authId = String(authUserId || '');
   const isRequester = request => getEntityId(request.requester) === authId;
@@ -305,6 +333,7 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
         avatar: getInitials(peerName),
         matched: false,
         requested: outgoingPendingReceiverIds.has(requesterId),
+        proof: mapVerificationProof(r.verificationProof),
       };
     });
 
@@ -325,6 +354,7 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
       matched: false,
       requested: outgoingPendingReceiverIds.has(requesterId),
       recommended: true,
+      proof: mapVerificationProof(request.verificationProof),
       targetTopic: item.targetTopic,
       targetMastery: item.targetMastery,
       score: item.score,
@@ -346,6 +376,7 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
         skill: `${r.teachSkill} ⇄ ${r.learnSkill}`,
         msg: r.message,
         status: r.status,
+        proof: mapVerificationProof(r.verificationProof),
       };
     });
 
@@ -357,6 +388,7 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
         teach: r.teachSkill,
         learn: r.learnSkill,
         msg: r.message,
+        proof: mapVerificationProof(r.verificationProof),
       };
     });
 
@@ -375,10 +407,14 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
         status: r.status,
         skill: `${r.teachSkill} <-> ${r.learnSkill}`,
         msg: r.message || 'No message provided.',
+        proof: mapVerificationProof(r.verificationProof),
+        meetingUrl: r.meetingUrl || '',
+        messages: mapChatMessages(r.chat?.messages || [], authId),
         createdAt: r.createdAt,
         updatedAt: r.updatedAt,
         canCancel: outgoing && r.status === 'pending',
         canComplete: r.status === 'accepted',
+        canChat: r.status === 'accepted',
       };
     });
 
@@ -1005,7 +1041,7 @@ export default function App() {
         timeRemaining: 0,
       });
 
-      setActiveTab('dashboard');
+      handleTabChange('dashboard', { replace: true });
       showToast(`Quiz submitted successfully! Earned +${coinsEarned} coins.`, 'success');
     } catch (err) {
       console.error('Failed to submit quiz:', err);
@@ -1060,7 +1096,7 @@ export default function App() {
   };
 
   // SkillSwap handlers (GATED)
-  const handleRequestSwap = guarded(async (peerId) => {
+  const handleRequestSwap = guarded(async (peerId, options = {}) => {
     const peer = [...skillSwap.matches, ...(skillSwap.recommended || [])].find(m => m.id === peerId);
     if (!peer) return;
     if (peer.requested) {
@@ -1077,7 +1113,8 @@ export default function App() {
         teachSkill: peer.take || 'Peer support',
         learnSkill: peer.give || peer.targetTopic || 'SkillSwap',
         receiverId: peer.requesterId,
-        message: `I can help with ${peer.take || 'your topic'} and would like to learn ${peer.give || peer.targetTopic || 'your skill'}.`,
+        message: options.message || `I can help with ${peer.take || 'your topic'} and would like to learn ${peer.give || peer.targetTopic || 'your skill'}.`,
+        verificationProof: options.verificationProof,
       });
 
       await refreshSkillSwapState();
@@ -1137,13 +1174,37 @@ export default function App() {
     }
   });
 
+  const handleSendSwapMessage = guarded(async (reqId, message) => {
+    try {
+      await SkillSwapService.sendMessage(reqId, message);
+      await refreshSkillSwapState();
+    } catch (err) {
+      console.error('Failed to send SkillSwap message:', err);
+      showToast(err.message || 'Failed to send SkillSwap message.', 'error');
+      throw err;
+    }
+  });
+
+  const handleSaveSwapMeeting = guarded(async (reqId, meetingUrl) => {
+    try {
+      await SkillSwapService.saveMeeting(reqId, meetingUrl);
+      await refreshSkillSwapState();
+      showToast('Google Meet link saved for this swap.', 'success');
+    } catch (err) {
+      console.error('Failed to save SkillSwap meeting:', err);
+      showToast(err.message || 'Failed to save Google Meet link.', 'error');
+      throw err;
+    }
+  });
+
   // Post a swap (GATED)
-  const handlePostSwap = guarded(async ({ teach, learn, msg }) => {
+  const handlePostSwap = guarded(async ({ teach, learn, msg, verificationProof }) => {
     try {
       await SkillSwapService.post({
         teachSkill: teach,
         learnSkill: learn,
         message: msg,
+        verificationProof,
       });
       
       await refreshSkillSwapState();
@@ -1431,6 +1492,8 @@ export default function App() {
               onIgnore={handleIgnoreRequest}
               onCancel={handleCancelSwap}
               onComplete={handleCompleteSwap}
+              onSendMessage={handleSendSwapMessage}
+              onSaveMeeting={handleSaveSwapMeeting}
               onPostSwap={handlePostSwap}
               searchQuery={searchQuery}
             />

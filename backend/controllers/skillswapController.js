@@ -6,6 +6,8 @@ import {
   declineSkillSwapRequest,
   listSkillSwapRequests,
   recommendSkillSwapPeers,
+  sendSkillSwapMessage,
+  updateSkillSwapMeetingUrl,
 } from "../services/skillswapService.js";
 import { notifyUser } from "../sockets/notificationSocket.js";
 import { sendCreated, sendSuccess } from "../utils/responseHandler.js";
@@ -163,4 +165,50 @@ export async function completeRequest(req, res) {
     requestId,
   });
   return sendSuccess(res, { message: "SkillSwap request completed", data: request });
+}
+
+export async function sendMessage(req, res) {
+  const request = await sendSkillSwapMessage(req.params.id, req.user._id, req.body.message);
+  const actor = userName(req.user);
+  const requestId = request._id.toString();
+
+  notifyCounterpart(request, req.user._id, {
+    title: "New SkillSwap message",
+    message: `${actor} sent a message in your SkillSwap chat.`,
+    type: "info",
+    action: "message",
+    requestId,
+  });
+  notifySkillSwap(req.user._id, {
+    title: "Message sent",
+    message: "Your SkillSwap message was sent.",
+    type: "success",
+    action: "message",
+    requestId,
+  });
+
+  return sendSuccess(res, { message: "SkillSwap message sent", data: request });
+}
+
+export async function updateMeeting(req, res) {
+  const request = await updateSkillSwapMeetingUrl(req.params.id, req.user._id, req.body.meetingUrl);
+  const actor = userName(req.user);
+  const requestId = request._id.toString();
+
+  notifyCounterpart(request, req.user._id, {
+    title: "Google Meet link updated",
+    message: `${actor} added a Google Meet link to your SkillSwap.`,
+    type: "info",
+    action: "meeting",
+    requestId,
+  });
+  notifySkillSwap(req.user._id, {
+    title: "Meet link saved",
+    message: "Google Meet link saved for this SkillSwap.",
+    type: "success",
+    action: "meeting",
+    requestId,
+  });
+
+  return sendSuccess(res, { message: "SkillSwap meeting link updated", data: request });
 }

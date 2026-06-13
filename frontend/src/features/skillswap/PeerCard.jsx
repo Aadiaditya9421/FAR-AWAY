@@ -36,6 +36,11 @@ export default function PeerCard({ peer, onRequest }) {
           ) : (
             <p className="text-[10px] text-textMuted mt-0.5">Available for swap</p>
           )}
+          {peer.proof?.fileName && (
+            <p className="text-[10px] text-accentEmerald mt-1 font-semibold">
+              Verified with {peer.proof.proofType === 'certificate' ? 'certificate' : 'resume'}
+            </p>
+          )}
         </div>
       </div>
 

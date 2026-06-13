@@ -14,6 +14,9 @@ const SKILL_ALIASES = {
   python: ["python", "machine learning", "ml", "data science"],
 };
 
+const ALLOWED_PROOF_MIME_TYPES = new Set(["application/pdf", "image/png", "image/jpeg", "image/webp"]);
+const MAX_PROOF_FILE_SIZE = 1_500_000;
+
 function normalizeSkill(value = "") {
   return String(value).toLowerCase().replace(/[^a-z0-9+# ]/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -41,6 +44,68 @@ function skillMatchScore(teachSkill, targetTopic, peerSkillAreas = []) {
 function getDisplayName(user) {
   if (!user || typeof user === "string") return "Peer";
   return [user.firstName, user.lastName].filter(Boolean).join(" ").trim() || user.email || "Peer";
+}
+
+function participantFilter(id, userId) {
+  return {
+    _id: id,
+    $or: [{ requester: userId }, { receiver: userId }],
+  };
+}
+
+function normalizeVerificationProof(proof) {
+  if (!proof || typeof proof !== "object") {
+    throw new AppError("Skill verification proof is required", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  const proofType = proof.proofType === "certificate" ? "certificate" : "resume";
+  const fileName = String(proof.fileName || "").trim();
+  const mimeType = String(proof.mimeType || "").trim();
+  const fileSize = Number(proof.fileSize || 0);
+  const dataUrl = String(proof.dataUrl || "");
+
+  if (!fileName) {
+    throw new AppError("Proof file name is required", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+  if (!ALLOWED_PROOF_MIME_TYPES.has(mimeType)) {
+    throw new AppError("Proof must be a PDF or image certificate", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+  if (!Number.isFinite(fileSize) || fileSize <= 0 || fileSize > MAX_PROOF_FILE_SIZE) {
+    throw new AppError("Proof file must be 1.5MB or smaller", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+  if (!dataUrl.startsWith(`data:${mimeType};base64,`)) {
+    throw new AppError("Proof file payload is invalid", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  return {
+    proofType,
+    fileName,
+    mimeType,
+    fileSize,
+    dataUrl,
+    status: "submitted",
+    uploadedAt: new Date(),
+  };
+}
+
+function assertGoogleMeetUrl(value) {
+  let parsed;
+  try {
+    parsed = new URL(value);
+  } catch {
+    throw new AppError("Meeting URL must be a valid HTTPS Google Meet link", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  if (parsed.protocol !== "https:" || parsed.hostname !== "meet.google.com") {
+    throw new AppError("Meeting URL must be a valid HTTPS Google Meet link", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+}
+
+function populateSkillSwapRequest(query) {
+  return query
+    .populate("requester", "firstName lastName email skillAreas")
+    .populate("receiver", "firstName lastName email skillAreas")
+    .populate("chat.messages.sender", "firstName lastName email");
 }
 
 function recommendationReason({ request, targetTopic, skillFit, peerMastery, availabilityScore }) {
@@ -76,9 +141,7 @@ export async function listSkillSwapRequests(userId, query) {
   if (query.status) filter.status = query.status;
 
   const [items, total] = await Promise.all([
-    SkillSwap.find(filter)
-      .populate("requester", "firstName lastName email skillAreas")
-      .populate("receiver", "firstName lastName email skillAreas")
+    populateSkillSwapRequest(SkillSwap.find(filter))
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit),
@@ -185,15 +248,18 @@ export async function createSkillSwapRequest(userId, payload) {
     throw new AppError("You cannot send a SkillSwap request to yourself", 400, ERROR_CODES.VALIDATION_ERROR);
   }
 
-  return SkillSwap.create({
+  const request = await SkillSwap.create({
     requester: userId,
     receiver: payload.receiverId || undefined,
     teachSkill: payload.teachSkill,
     learnSkill: payload.learnSkill,
     message: payload.message || "",
+    verificationProof: normalizeVerificationProof(payload.verificationProof),
     status: payload.receiverId ? "pending" : "open",
     scheduledAt: payload.scheduledAt,
   });
+
+  return populateSkillSwapRequest(SkillSwap.findById(request._id));
 }
 
 export async function acceptSkillSwapRequest(id, userId) {
@@ -264,4 +330,36 @@ export async function completeSkillSwapRequest(id, userId) {
   request.status = "completed";
   await request.save();
   return request;
+}
+
+export async function sendSkillSwapMessage(id, userId, body) {
+  const message = String(body || "").trim();
+  if (!message) {
+    throw new AppError("Message body is required", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  const request = await SkillSwap.findOne(participantFilter(id, userId));
+  if (!request) throw new AppError("SkillSwap request not found", 404, ERROR_CODES.NOT_FOUND);
+  if (request.status !== "accepted") {
+    throw new AppError("Chat opens after a SkillSwap is accepted", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  request.chat.messages.push({ sender: userId, body: message });
+  await request.save();
+  return populateSkillSwapRequest(SkillSwap.findById(request._id));
+}
+
+export async function updateSkillSwapMeetingUrl(id, userId, meetingUrl) {
+  const url = String(meetingUrl || "").trim();
+  assertGoogleMeetUrl(url);
+
+  const request = await SkillSwap.findOne(participantFilter(id, userId));
+  if (!request) throw new AppError("SkillSwap request not found", 404, ERROR_CODES.NOT_FOUND);
+  if (request.status !== "accepted") {
+    throw new AppError("Meeting links can be added after a SkillSwap is accepted", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  request.meetingUrl = url;
+  await request.save();
+  return populateSkillSwapRequest(SkillSwap.findById(request._id));
 }

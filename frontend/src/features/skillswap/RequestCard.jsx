@@ -22,6 +22,11 @@ export default function RequestCard({ request, onAccept, onIgnore }) {
             {request.skillLabel || request.skill}
           </p>
           <p className="text-[11px] text-textMuted leading-relaxed">{request.msg}</p>
+          {request.proof?.fileName && (
+            <p className="mt-2 text-[10px] font-bold text-accentEmerald">
+              Skill proof submitted: {request.proof.proofType === 'certificate' ? 'Certificate' : 'Resume'}
+            </p>
+          )}
         </div>
       </div>
 

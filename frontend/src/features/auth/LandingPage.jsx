@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   LogoMark,
   IconArrowsSwap,
@@ -93,6 +94,11 @@ export default function LandingPage({
   onToggleTheme,
 }) {
   const isDark = themeMode === 'dark';
+  const [activeFeature, setActiveFeature] = useState(LEARNING_FEATURES[0].solution);
+  const activeFeatureData = LEARNING_FEATURES.find(item => item.solution === activeFeature) || LEARNING_FEATURES[0];
+  const scrollToFeatures = () => {
+    document.getElementById('features')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   return (
     <div className="min-h-screen bg-bgPrimary text-textPrimary">
@@ -140,9 +146,9 @@ export default function LandingPage({
           </div>
         </header>
 
-        <div className="relative z-10 flex min-h-[calc(92vh-76px)] items-center px-5 pb-20 sm:px-8 lg:px-12">
-          <div className="max-w-3xl">
-            <p className="mb-4 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/75 backdrop-blur">
+        <div className="relative z-10 grid min-h-[calc(92vh-76px)] items-center gap-8 px-5 pb-20 sm:px-8 lg:grid-cols-[1fr_380px] lg:px-12">
+          <div className="max-w-3xl animate-landing-rise">
+            <p className="mb-4 inline-flex rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/75 backdrop-blur landing-glow">
               Personalized learning, powered by adaptive practice
             </p>
             <h1 className="text-5xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl">
@@ -166,6 +172,32 @@ export default function LandingPage({
               >
                 Preview as Guest
               </button>
+              <button
+                type="button"
+                onClick={scrollToFeatures}
+                className="rounded-md border border-white/25 bg-white/5 px-5 py-2.5 text-sm font-semibold text-white hover:bg-white/15 transition-colors"
+              >
+                Explore Features
+              </button>
+            </div>
+          </div>
+
+          <div className="hidden lg:block animate-landing-float">
+            <div className="rounded-lg border border-white/20 bg-white/10 p-4 backdrop-blur-xl shadow-modal">
+              <div className="flex items-center justify-between border-b border-white/15 pb-3">
+                <p className="text-xs font-bold uppercase tracking-wide text-white/65">Live loop</p>
+                <span className="rounded-full bg-accentEmerald px-2 py-0.5 text-[10px] font-bold text-white">Ready</span>
+              </div>
+              {[
+                ['Assess', 'Adaptive topic quiz unlocked'],
+                ['Improve', 'Weakness summary generated'],
+                ['Connect', 'Verified SkillSwap session ready'],
+              ].map(([label, body], index) => (
+                <div key={label} className="mt-3 rounded-md border border-white/15 bg-black/20 p-3 landing-stagger" style={{ animationDelay: `${index * 120}ms` }}>
+                  <p className="text-[10px] font-bold uppercase tracking-wide text-white/55">{label}</p>
+                  <p className="mt-1 text-sm font-semibold text-white">{body}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -178,7 +210,7 @@ export default function LandingPage({
             ['BKT', 'mastery tracking and adaptive practice'],
             ['Live', 'MongoDB, Redis, SMTP, and Google auth ready'],
           ].map(([value, label]) => (
-            <div key={label} className="rounded-lg border border-borderColor bg-bgSecondary p-4">
+            <div key={label} className="rounded-lg border border-borderColor bg-bgSecondary p-4 landing-stat">
               <p className="text-2xl font-bold text-textPrimary">{value}</p>
               <p className="mt-1 text-xs font-medium text-textMuted">{label}</p>
             </div>
@@ -194,7 +226,7 @@ export default function LandingPage({
 
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           {HOW_IT_WORKS.map(item => (
-            <article key={item.step} className="card p-5">
+            <article key={item.step} className="card p-5 landing-feature-card">
               <p className="mb-4 inline-flex h-10 w-10 items-center justify-center rounded-md border border-accentIndigo/20 bg-accentIndigo/10 text-sm font-bold text-accentIndigo">
                 {item.step}
               </p>
@@ -205,16 +237,27 @@ export default function LandingPage({
         </div>
       </section>
 
-      <section className="border-y border-borderColor bg-bgCard">
+      <section id="features" className="border-y border-borderColor bg-bgCard scroll-mt-20">
         <div className="mx-auto max-w-6xl px-5 py-14 sm:px-8 lg:px-12">
           <div className="mb-8 text-center">
             <p className="text-xs font-bold uppercase tracking-wide text-accentIndigo">Features that help you learn</p>
             <h2 className="mt-2 text-3xl font-bold text-textPrimary sm:text-4xl">Everything you need to master your skills</h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="mb-5 rounded-lg border border-accentIndigo/20 bg-accentIndigo/6 p-5">
+            <p className="text-[10px] font-bold uppercase tracking-wide text-accentIndigo">Currently highlighted</p>
+            <h3 className="mt-2 text-xl font-bold text-textPrimary">{activeFeatureData.solution}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-textMuted">{activeFeatureData.description}</p>
+          </div>
+
+          <div className="mx-auto flex max-w-4xl flex-col gap-4">
             {LEARNING_FEATURES.map(feature => (
-              <FeatureCard key={feature.solution} {...feature} />
+              <FeatureCard
+                key={feature.solution}
+                active={feature.solution === activeFeature}
+                onActivate={() => setActiveFeature(feature.solution)}
+                {...feature}
+              />
             ))}
           </div>
         </div>
@@ -274,12 +317,22 @@ export default function LandingPage({
   );
 }
 
-function FeatureCard({ Icon, problem, solution, description, benefits }) {
+function FeatureCard({ Icon, problem, solution, description, benefits, active, onActivate }) {
   return (
-    <article className="card overflow-hidden">
+    <article
+      role="button"
+      tabIndex={0}
+      onMouseEnter={onActivate}
+      onFocus={onActivate}
+      onClick={onActivate}
+      onKeyDown={event => {
+        if (event.key === 'Enter' || event.key === ' ') onActivate();
+      }}
+      className={`card overflow-hidden landing-feature-card ${active ? 'landing-feature-card-active' : ''}`}
+    >
       <div className="grid grid-cols-1 md:grid-cols-[0.95fr_1.05fr]">
         <div className="border-b border-borderColor bg-bgSecondary p-5 md:border-b-0 md:border-r">
-          <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-md border border-borderColor bg-bgCard text-accentIndigo">
+          <div className="landing-feature-icon mb-4 flex h-11 w-11 items-center justify-center rounded-md border border-borderColor bg-bgCard text-accentIndigo">
             <Icon size={20} />
           </div>
           <p className="text-[10px] font-bold uppercase tracking-wide text-textMuted">Problem</p>
