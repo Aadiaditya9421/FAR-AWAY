@@ -83,6 +83,8 @@ export const SkillSwapService = {
     api.post('/skillswap/request', { teachSkill, learnSkill, receiverId, message, scheduledAt }, { auth: true }),
   accept: (id) => api.put(`/skillswap/accept/${id}`, {}, { auth: true }),
   decline: (id) => api.put(`/skillswap/decline/${id}`, {}, { auth: true }),
+  cancel: (id) => api.put(`/skillswap/cancel/${id}`, {}, { auth: true }),
+  complete: (id) => api.put(`/skillswap/complete/${id}`, {}, { auth: true }),
 };
 
 /* ─────────────── Coins ─────────────── */

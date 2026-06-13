@@ -19,7 +19,7 @@ export default function RequestCard({ request, onAccept, onIgnore }) {
             </Badge>
           </div>
           <p className="text-[10px] font-display font-semibold text-accentIndigo mb-2">
-            {request.skill}
+            {request.skillLabel || request.skill}
           </p>
           <p className="text-[11px] text-textMuted leading-relaxed">{request.msg}</p>
         </div>

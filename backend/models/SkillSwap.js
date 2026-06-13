@@ -28,7 +28,7 @@ const skillSwapSchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["open", "pending", "accepted", "declined", "completed"],
+      enum: ["open", "pending", "accepted", "declined", "cancelled", "completed"],
       default: "open",
       index: true,
     },

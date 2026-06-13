@@ -13,12 +13,14 @@ export default function SkillSwapView({
   onRequestSwap,
   onAccept,
   onIgnore,
+  onCancel,
+  onComplete,
   onPostSwap,
   searchQuery,
 }) {
   const [showPostModal, setShowPostModal] = useState(false);
 
-  const filteredMatches = skillSwap.matches.filter(m => {
+  const filteredMatches = (skillSwap.matches || []).filter(m => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return m.name.toLowerCase().includes(q) ||
@@ -33,11 +35,27 @@ export default function SkillSwapView({
            m.take.toLowerCase().includes(q) ||
            m.targetTopic?.toLowerCase().includes(q);
   });
-  const recommendedIds = new Set(filteredRecommended.map(m => m.id));
-  const suggestedMatches = filteredMatches.filter(m => !recommendedIds.has(m.id));
+  const suggestedMatches = filteredMatches;
 
-  const pendingRequests = skillSwap.requests.filter(r => r.status === 'pending').length;
+  const pendingRequests = (skillSwap.requests || []).filter(r => r.status === 'pending').length;
   const myPostings = skillSwap.myPostings || [];
+  const history = skillSwap.history || [];
+
+  const statusClass = status => ({
+    pending: 'bg-accentAmber/10 text-accentAmber border-accentAmber/20',
+    accepted: 'bg-accentEmerald/10 text-accentEmerald border-accentEmerald/20',
+    declined: 'bg-accentCrimson/10 text-accentCrimson border-accentCrimson/20',
+    cancelled: 'bg-textMuted/10 text-textMuted border-borderColor',
+    completed: 'bg-accentIndigo/10 text-accentIndigo border-accentIndigo/20',
+  }[status] || 'bg-bgSecondary text-textMuted border-borderColor');
+
+  const statusLabel = status => ({
+    pending: 'Pending',
+    accepted: 'Accepted',
+    declined: 'Declined',
+    cancelled: 'Cancelled',
+    completed: 'Completed',
+  }[status] || status);
 
   return (
     <div className="animate-fadeIn">
@@ -169,9 +187,9 @@ export default function SkillSwapView({
             </h4>
           </div>
 
-          {skillSwap.requests.length > 0 ? (
+          {(skillSwap.requests || []).length > 0 ? (
             <div className="flex flex-col gap-3">
-              {skillSwap.requests.map(req => (
+              {(skillSwap.requests || []).map(req => (
                 <RequestCard
                   key={req.id}
                   request={req}
@@ -184,6 +202,66 @@ export default function SkillSwapView({
             <div className="card p-6 text-center flex flex-col items-center justify-center">
               <IconBell size={24} className="text-textMuted mb-2 opacity-40" />
               <p className="text-xs text-textMuted">No incoming requests yet.</p>
+            </div>
+          )}
+
+          {history.length > 0 && (
+            <div className="mt-6">
+              <div className="flex items-center gap-2 mb-3">
+                <IconArrowsSwap size={15} className="text-accentEmerald" />
+                <h4 className="font-display font-semibold text-sm text-textPrimary">
+                  Swap History
+                  <span className="text-[10px] font-normal text-textMuted ml-1.5">({history.length})</span>
+                </h4>
+              </div>
+              <div className="flex flex-col gap-3">
+                {history.map(item => (
+                  <div key={item.id} className="card p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-8 h-8 rounded-full bg-bgSecondary border border-borderColor flex items-center justify-center text-[11px] font-bold text-textPrimary flex-shrink-0">
+                        {item.avatar}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[12px] font-display font-semibold text-textPrimary truncate">
+                            {item.peerName}
+                          </p>
+                          <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${statusClass(item.status)}`}>
+                            {statusLabel(item.status)}
+                          </span>
+                        </div>
+                        <p className="text-[10px] text-textMuted mt-0.5">
+                          {item.direction} - {item.skill}
+                        </p>
+                        <p className="text-[11px] text-textMuted leading-relaxed mt-2">{item.msg}</p>
+                      </div>
+                    </div>
+
+                    {(item.canCancel || item.canComplete) && (
+                      <div className="flex gap-2 mt-3 pt-3 border-t border-borderColor">
+                        {item.canComplete && (
+                          <button
+                            type="button"
+                            onClick={() => onComplete?.(item.id)}
+                            className="btn btn-primary text-xs px-3 py-1.5 rounded flex-1"
+                          >
+                            Mark Done
+                          </button>
+                        )}
+                        {item.canCancel && (
+                          <button
+                            type="button"
+                            onClick={() => onCancel?.(item.id)}
+                            className="btn btn-secondary text-xs px-3 py-1.5 rounded flex-1"
+                          >
+                            Cancel
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 

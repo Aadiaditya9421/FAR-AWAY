@@ -232,3 +232,36 @@ export async function declineSkillSwapRequest(id, userId) {
   await request.save();
   return request;
 }
+
+export async function cancelSkillSwapRequest(id, userId) {
+  const request = await SkillSwap.findById(id);
+  if (!request) throw new AppError("SkillSwap request not found", 404, ERROR_CODES.NOT_FOUND);
+  if (request.requester.toString() !== userId.toString()) {
+    throw new AppError("Only the requester can cancel this SkillSwap request", 403, ERROR_CODES.FORBIDDEN);
+  }
+  if (!["open", "pending"].includes(request.status)) {
+    throw new AppError("Only open or pending SkillSwap requests can be cancelled", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  request.status = "cancelled";
+  await request.save();
+  return request;
+}
+
+export async function completeSkillSwapRequest(id, userId) {
+  const request = await SkillSwap.findById(id);
+  if (!request) throw new AppError("SkillSwap request not found", 404, ERROR_CODES.NOT_FOUND);
+  const isParticipant = request.requester.toString() === userId.toString()
+    || request.receiver?.toString() === userId.toString();
+
+  if (!isParticipant) {
+    throw new AppError("You do not have permission to complete this SkillSwap request", 403, ERROR_CODES.FORBIDDEN);
+  }
+  if (request.status !== "accepted") {
+    throw new AppError("Only accepted SkillSwap requests can be completed", 400, ERROR_CODES.VALIDATION_ERROR);
+  }
+
+  request.status = "completed";
+  await request.save();
+  return request;
+}

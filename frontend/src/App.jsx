@@ -50,6 +50,29 @@ import {
 // ── Socket.io Client ──
 import { connectSockets, disconnectSockets, getRootSocket } from './lib/socket';
 
+const EMPTY_SKILLSWAP_STATE = Object.freeze({
+  matches: [],
+  recommended: [],
+  requests: [],
+  myPostings: [],
+  history: [],
+});
+
+const STUDENT_APP_TABS = new Set([
+  'dashboard',
+  'assessments',
+  'leaderboard',
+  'competitions',
+  'coding',
+  'skillswap',
+  'quiz',
+]);
+
+const TEACHER_APP_TABS = new Set([
+  'class-progress',
+  'create-test',
+]);
+
 const INITIAL_SUBMISSIONS = [
   {
     id: 'sub-1',
@@ -249,37 +272,58 @@ function mapCompetitions(competitionsList = [], authUserId) {
   });
 }
 
+function getEntityId(value) {
+  if (!value) return '';
+  if (typeof value === 'string') return value;
+  return String(value._id || value.id || value);
+}
+
 function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
+  const authId = String(authUserId || '');
+  const isRequester = request => getEntityId(request.requester) === authId;
+  const isReceiver = request => getEntityId(request.receiver) === authId;
+  const isParticipant = request => isRequester(request) || isReceiver(request);
+  const outgoingPendingReceiverIds = new Set(
+    requestsList
+      .filter(r => isRequester(r) && r.status === 'pending')
+      .map(r => getEntityId(r.receiver))
+      .filter(Boolean),
+  );
+
   const matches = requestsList
-    .filter(r => r.status === 'open' && r.requester?._id !== authUserId && r.requester !== authUserId)
+    .filter(r => r.status === 'open' && getEntityId(r.requester) !== authId)
     .map(r => {
-      const peerName = r.requester ? `${r.requester.firstName} ${r.requester.lastName}`.trim() : 'Anonymous';
+      const peerName = getDisplayName(r.requester);
+      const requesterId = getEntityId(r.requester);
       return {
         id: r._id || r.id,
-        requesterId: r.requester?._id || r.requester,
+        requesterId,
         name: peerName,
         give: r.teachSkill,
         take: r.learnSkill,
         bio: r.message || 'No bio provided.',
-        avatar: peerName.split(' ').map(x => x[0]).join('').toUpperCase(),
+        avatar: getInitials(peerName),
         matched: false,
+        requested: outgoingPendingReceiverIds.has(requesterId),
       };
     });
 
   const recommended = recommendationsList.map(item => {
     const request = item.request || {};
     const suggestedPeer = item.peer || {};
+    const requesterId = getEntityId(request.requester) || String(suggestedPeer.id || '');
     const peerName = suggestedPeer.name || getDisplayName(request.requester);
 
     return {
       id: request._id || request.id,
-      requesterId: request.requester?._id || request.requester || suggestedPeer.id,
+      requesterId,
       name: peerName,
       give: request.teachSkill,
       take: request.learnSkill,
       bio: request.message || 'No bio provided.',
       avatar: getInitials(peerName),
       matched: false,
+      requested: outgoingPendingReceiverIds.has(requesterId),
       recommended: true,
       targetTopic: item.targetTopic,
       targetMastery: item.targetMastery,
@@ -290,13 +334,15 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
   });
 
   const requests = requestsList
-    .filter(r => (r.receiver === authUserId || r.receiver?._id === authUserId) && r.status === 'pending')
+    .filter(r => isReceiver(r) && r.status === 'pending')
     .map(r => {
-      const senderName = r.requester ? `${r.requester.firstName} ${r.requester.lastName}`.trim() : 'Anonymous';
+      const senderName = getDisplayName(r.requester);
+      const skillLabel = `${r.teachSkill} <-> ${r.learnSkill}`;
       return {
         id: r._id || r.id,
         sender: senderName,
-        avatar: senderName.split(' ').map(x => x[0]).join('').toUpperCase(),
+        avatar: getInitials(senderName),
+        skillLabel,
         skill: `${r.teachSkill} ⇄ ${r.learnSkill}`,
         msg: r.message,
         status: r.status,
@@ -304,7 +350,7 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
     });
 
   const myPostings = requestsList
-    .filter(r => r.requester === authUserId || r.requester?._id === authUserId)
+    .filter(r => isRequester(r) && r.status === 'open')
     .map(r => {
       return {
         id: r._id || r.id,
@@ -314,11 +360,34 @@ function mapSkillSwap(requestsList = [], authUserId, recommendationsList = []) {
       };
     });
 
+  const history = requestsList
+    .filter(r => isParticipant(r) && r.status !== 'open')
+    .map(r => {
+      const outgoing = isRequester(r);
+      const peer = outgoing ? r.receiver : r.requester;
+      const peerName = getDisplayName(peer);
+
+      return {
+        id: r._id || r.id,
+        peerName,
+        avatar: getInitials(peerName),
+        direction: outgoing ? 'Outgoing' : 'Incoming',
+        status: r.status,
+        skill: `${r.teachSkill} <-> ${r.learnSkill}`,
+        msg: r.message || 'No message provided.',
+        createdAt: r.createdAt,
+        updatedAt: r.updatedAt,
+        canCancel: outgoing && r.status === 'pending',
+        canComplete: r.status === 'accepted',
+      };
+    });
+
   return {
     matches,
     recommended,
     requests,
     myPostings,
+    history,
   };
 }
 
@@ -383,6 +452,49 @@ function writeLandingUrl(mode = 'push') {
     '',
     `${url.pathname}${url.search}${url.hash}`,
   );
+}
+
+function getDefaultTabForRole(role = 'student') {
+  return role === 'teacher' || role === 'admin' ? 'class-progress' : 'dashboard';
+}
+
+function isAllowedAppTab(tab, role = 'student') {
+  const tabs = role === 'teacher' || role === 'admin' ? TEACHER_APP_TABS : STUDENT_APP_TABS;
+  return tabs.has(tab);
+}
+
+function getInitialAppTab(role = 'student') {
+  if (typeof window === 'undefined') return getDefaultTabForRole(role);
+  const params = new URLSearchParams(window.location.search);
+  const tab = params.get('tab');
+  return isAllowedAppTab(tab, role) ? tab : getDefaultTabForRole(role);
+}
+
+function writeAppTabUrl(tab, mode = 'push') {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.searchParams.delete('auth');
+  url.searchParams.delete('resetToken');
+  url.searchParams.set('tab', tab);
+  window.history[mode === 'replace' ? 'replaceState' : 'pushState'](
+    null,
+    '',
+    `${url.pathname}${url.search}${url.hash}`,
+  );
+}
+
+function buildNotification(payload = {}) {
+  const message = payload.body || payload.message || 'Something changed in your account.';
+  return {
+    id: payload.id || payload.notificationId || `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    title: payload.title || 'Notification',
+    body: message,
+    type: payload.type || 'info',
+    category: payload.category || 'general',
+    action: payload.action || '',
+    requestId: payload.requestId || '',
+    createdAt: payload.createdAt || new Date().toISOString(),
+  };
 }
 
 function getInitialThemeMode() {
@@ -462,24 +574,14 @@ export default function App() {
     window.localStorage.setItem('far-away-theme', themeMode);
   }, [themeMode]);
 
-  useEffect(() => {
-    const handlePopState = () => {
-      if (isLoggedIn || guestMode) return;
-      const next = getInitialAuthScreen();
-      setAuthView(next.authView);
-      setShowLanding(next.showLanding);
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    return () => window.removeEventListener('popstate', handlePopState);
-  }, [guestMode, isLoggedIn]);
-
   // ───────────────────────────────────────────
   // APP STATE (with dynamic subjects and role sync)
   // ───────────────────────────────────────────
-  const [activeTab, setActiveTab]                 = useState('dashboard');
+  const [activeTab, setActiveTab]                 = useState(() => getInitialAppTab(authUser?.role || 'student'));
+  const [tabBackStack, setTabBackStack]           = useState([]);
   const [searchQuery, setSearchQuery]             = useState('');
-  const [hasUnread, setHasUnread]                 = useState(true);
+  const [notifications, setNotifications]         = useState([]);
+  const [hasUnread, setHasUnread]                 = useState(false);
 
   // User
   const [user, setUser]                           = useState(INITIAL_USER);
@@ -488,12 +590,32 @@ export default function App() {
   const [subjects, setSubjects]                   = useState([]);
   const [submissions, setSubmissions]             = useState(INITIAL_SUBMISSIONS);
   const [competitions, setCompetitions]           = useState([]);
-  const [skillSwap, setSkillSwap]                 = useState({ matches: [], recommended: [], requests: [], myPostings: [] });
+  const [skillSwap, setSkillSwap]                 = useState(EMPTY_SKILLSWAP_STATE);
   const [progress, setProgress]                   = useState([]);
   const [insights, setInsights]                   = useState(null);
   const [practiceSet, setPracticeSet]             = useState(null);
   const [appDataLoading, setAppDataLoading]       = useState(false);
   const [appDataError, setAppDataError]           = useState('');
+
+  useEffect(() => {
+    const handlePopState = () => {
+      if (!isLoggedIn && !guestMode) {
+        const next = getInitialAuthScreen();
+        setAuthView(next.authView);
+        setShowLanding(next.showLanding);
+        return;
+      }
+
+      const role = user.role || authUser?.role || 'student';
+      const nextTab = getInitialAppTab(role);
+      setActiveTab(nextTab);
+      setSearchQuery('');
+      setTabBackStack(prev => prev.slice(0, -1));
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, [authUser?.role, guestMode, isLoggedIn, user.role]);
 
   // Sync authUser info to local state
   useEffect(() => {
@@ -514,10 +636,14 @@ export default function App() {
         level: toFiniteNumber(authUser.level, 0),
         skillAreas: authUser.skillAreas || [],
       }));
-      setActiveTab(authUser.role === 'teacher' ? 'class-progress' : 'dashboard');
+      const nextTab = getInitialAppTab(authUser.role || 'student');
+      setActiveTab(nextTab);
+      setTabBackStack([]);
+      writeAppTabUrl(nextTab, 'replace');
     } else if (!isLoggedIn) {
       setUser(INITIAL_USER);
       setActiveTab('dashboard');
+      setTabBackStack([]);
     }
   }, [isLoggedIn, authUser, initializing]);
 
@@ -526,31 +652,52 @@ export default function App() {
     if (initializing) return undefined;
 
     if (isLoggedIn && authUser) {
+      const authUserId = authUser._id || authUser.id;
       // Connect to Socket.io namespaces
-      connectSockets(authUser._id || authUser.id);
+      connectSockets(authUserId);
 
       // eslint-disable-next-line react-hooks/set-state-in-effect -- clear guest/demo data before authenticated API responses arrive
       setSubjects([]);
       setSubmissions([]);
       setCompetitions([]);
-      setSkillSwap({ matches: [], recommended: [], requests: [], myPostings: [] });
+      setSkillSwap(EMPTY_SKILLSWAP_STATE);
       setProgress([]);
       setInsights(null);
       setPracticeSet(null);
       setAppDataLoading(true);
       setAppDataError('');
+      setNotifications([]);
+      setHasUnread(false);
+
+      const refreshSkillSwapFromServer = async () => {
+        if ((authUser.role || 'student') === 'teacher') return;
+        const [skillSwapData, recommendedPeersData] = await Promise.all([
+          SkillSwapService.requests(),
+          SkillSwapService.recommended().catch(() => []),
+        ]);
+        setSkillSwap(mapSkillSwap(skillSwapData, authUserId, recommendedPeersData));
+      };
       
       const socket = getRootSocket();
       if (socket) {
         socket.on('notification:new', (payload) => {
-          showToast(payload.message || 'New notification!', payload.type || 'info');
+          const notification = buildNotification(payload);
+          setNotifications(prev => [
+            notification,
+            ...prev.filter(item => item.id !== notification.id),
+          ].slice(0, 20));
+          showToast(notification.body, notification.type || 'info');
           setHasUnread(true);
+          if (notification.category === 'skillswap') {
+            refreshSkillSwapFromServer().catch(err => {
+              console.error('Failed to refresh SkillSwap after notification:', err);
+            });
+          }
         });
       }
 
       const fetchData = async () => {
         try {
-          const authUserId = authUser._id || authUser.id;
           const role = authUser.role || 'student';
 
           if (role === 'teacher' || role === 'admin') {
@@ -562,7 +709,7 @@ export default function App() {
             setSubjects(groupAssessmentsIntoSubjects(assessmentsData));
             setSubmissions(mapTeacherSubmissions(submissionsData));
             setCompetitions([]);
-            setSkillSwap({ matches: [], recommended: [], requests: [], myPostings: [] });
+            setSkillSwap(EMPTY_SKILLSWAP_STATE);
             setProgress([]);
             setInsights(null);
             setPracticeSet(null);
@@ -615,7 +762,7 @@ export default function App() {
           showToast('Could not load live data from server. Please retry or check the backend.', 'error');
           setSubjects(groupAssessmentsIntoSubjects([]));
           setCompetitions([]);
-          setSkillSwap({ matches: [], recommended: [], requests: [], myPostings: [] });
+          setSkillSwap(EMPTY_SKILLSWAP_STATE);
           setSubmissions([]);
           setProgress([]);
           setInsights(null);
@@ -642,6 +789,8 @@ export default function App() {
       setPracticeSet(null);
       setAppDataLoading(false);
       setAppDataError('');
+      setNotifications([]);
+      setHasUnread(false);
     }
   }, [isLoggedIn, authUser, showToast, initializing]);
 
@@ -681,9 +830,35 @@ export default function App() {
   // HANDLERS
   // ───────────────────────────────────────────
 
-  const handleTabChange = (tab) => {
-    setActiveTab(tab);
+  const handleTabChange = (tab, options = {}) => {
+    const normalizedTab = isAllowedAppTab(tab, user.role) ? tab : getDefaultTabForRole(user.role);
+
+    if (activeTab === normalizedTab && !options.replace) {
+      setSearchQuery('');
+      return;
+    }
+
+    if (!options.replace) {
+      setTabBackStack(prev => [...prev, activeTab].slice(-10));
+    }
+
+    setActiveTab(normalizedTab);
     setSearchQuery('');
+    writeAppTabUrl(normalizedTab, options.replace ? 'replace' : 'push');
+  };
+
+  const handleAppBack = () => {
+    if (tabBackStack.length > 0) {
+      window.history.back();
+      return;
+    }
+
+    handleTabChange(getDefaultTabForRole(user.role), { replace: true });
+  };
+
+  const handleClearNotifications = () => {
+    setNotifications([]);
+    setHasUnread(false);
   };
 
   // Quiz: Start (GATED)
@@ -710,7 +885,7 @@ export default function App() {
         flagged:  {},
         timeRemaining: (res.duration || assessment.duration) * 60,
       });
-      setActiveTab('quiz');
+      handleTabChange('quiz');
     } catch (err) {
       console.error('Failed to load quiz questions:', err);
       showToast('Failed to start quiz. Please try again.', 'error');
@@ -888,13 +1063,26 @@ export default function App() {
   const handleRequestSwap = guarded(async (peerId) => {
     const peer = [...skillSwap.matches, ...(skillSwap.recommended || [])].find(m => m.id === peerId);
     if (!peer) return;
+    if (peer.requested) {
+      showToast(`You already requested a swap with ${peer.name}.`, 'info');
+      return;
+    }
+    if (!peer.requesterId) {
+      showToast('This peer cannot receive requests right now.', 'error');
+      return;
+    }
 
     try {
-      await SkillSwapService.accept(peerId);
+      await SkillSwapService.post({
+        teachSkill: peer.take || 'Peer support',
+        learnSkill: peer.give || peer.targetTopic || 'SkillSwap',
+        receiverId: peer.requesterId,
+        message: `I can help with ${peer.take || 'your topic'} and would like to learn ${peer.give || peer.targetTopic || 'your skill'}.`,
+      });
 
       await refreshSkillSwapState();
 
-      showToast(`Swap connected with ${peer.name}!`, 'success');
+      showToast(`Swap request sent to ${peer.name}.`, 'success');
     } catch (err) {
       console.error('Failed to request swap:', err);
       showToast('Failed to send swap request.', 'error');
@@ -924,6 +1112,28 @@ export default function App() {
     } catch (err) {
       console.error('Failed to decline request:', err);
       showToast('Failed to decline request.', 'error');
+    }
+  });
+
+  const handleCancelSwap = guarded(async (reqId) => {
+    try {
+      await SkillSwapService.cancel(reqId);
+      await refreshSkillSwapState();
+      showToast('SkillSwap request cancelled.', 'warning');
+    } catch (err) {
+      console.error('Failed to cancel swap:', err);
+      showToast(err.message || 'Failed to cancel SkillSwap request.', 'error');
+    }
+  });
+
+  const handleCompleteSwap = guarded(async (reqId) => {
+    try {
+      await SkillSwapService.complete(reqId);
+      await refreshSkillSwapState();
+      showToast('SkillSwap marked as completed.', 'success');
+    } catch (err) {
+      console.error('Failed to complete swap:', err);
+      showToast(err.message || 'Failed to complete SkillSwap.', 'error');
     }
   });
 
@@ -1124,16 +1334,20 @@ export default function App() {
       <Header
         activeTab={activeTab}
         onTabChange={handleTabChange}
+        canGoBack={tabBackStack.length > 0}
+        onBack={handleAppBack}
         user={user}
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
         onLogin={() => openAuthPage('login')}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        notifications={notifications}
         hasUnread={hasUnread}
         onNotificationClick={() => {
           setHasUnread(false);
         }}
+        onClearNotifications={handleClearNotifications}
         onCoinClick={handleCoinClick}
         themeMode={themeMode}
         onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
@@ -1215,6 +1429,8 @@ export default function App() {
               onRequestSwap={handleRequestSwap}
               onAccept={handleAcceptRequest}
               onIgnore={handleIgnoreRequest}
+              onCancel={handleCancelSwap}
+              onComplete={handleCompleteSwap}
               onPostSwap={handlePostSwap}
               searchQuery={searchQuery}
             />

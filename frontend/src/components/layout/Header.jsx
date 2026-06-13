@@ -10,7 +10,7 @@ import {
   IconLayoutGrid, IconBook, IconTrophy,
   IconZap, IconArrowsSwap, IconSearch, IconBell,
   IconCoin, IconFlame, IconLogOut, IconLogIn, IconPlus, IconUser, IconCode,
-  IconMoon, IconSun,
+  IconMoon, IconSun, IconArrowLeft,
 } from '../ui/Icons';
 
 const STUDENT_NAV = [
@@ -30,14 +30,18 @@ const TEACHER_NAV = [
 export default function Header({
   activeTab,
   onTabChange,
+  canGoBack = false,
+  onBack,
   user,
   isLoggedIn,
   onLogout,
   onLogin,
   searchQuery,
   onSearchChange,
+  notifications = [],
   hasUnread,
   onNotificationClick,
+  onClearNotifications,
   onCoinClick,
   themeMode = 'light',
   onToggleTheme,
@@ -47,22 +51,8 @@ export default function Header({
   const [mobileOpen, setMobileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [accountOpen, setAccountOpen] = useState(false);
+  const [accountPinned, setAccountPinned] = useState(false);
   const isDark = themeMode === 'dark';
-
-  const notifications = [
-    {
-      title: 'Welcome back',
-      body: isLoggedIn
-        ? 'Your learning profile is ready. Complete an assessment to refresh insights.'
-        : 'Sign in to save progress, streaks, and coins.',
-    },
-    {
-      title: 'Daily streak',
-      body: userRole === 'teacher'
-        ? 'Review today\'s submissions to keep your class moving.'
-        : `${user.streak || 0} day streak. Come back tomorrow to keep it alive.`,
-    },
-  ];
 
   const handleBellClick = () => {
     setNotificationsOpen(open => !open);
@@ -72,21 +62,34 @@ export default function Header({
   return (
     <header className="relative h-[76px] border-b border-borderColor bg-bgCard/90 backdrop-blur-md sticky top-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-all">
       {/* ── Left: Branding ── */}
-      <div 
-        className="flex items-center gap-3.5 cursor-pointer flex-shrink-0" 
-        onClick={() => onTabChange(userRole === 'teacher' ? 'class-progress' : 'dashboard')}
-      >
-        {/* Logo icon only appears when size is 100% (large desktops), hidden on smaller sizes */}
-        <div className="hidden xl:block transition-all duration-300">
-          <LogoMark size={28} />
-        </div>
-        <div className="flex flex-col">
-          <h1 className="font-sans font-bold text-[14px] text-textPrimary tracking-tight leading-none">
-            Far Away
-          </h1>
-          <p className="text-[9px] text-textMuted mt-0.5 font-medium tracking-wider uppercase">
-            Learning Arena
-          </p>
+      <div className="flex items-center gap-2 flex-shrink-0">
+        {canGoBack && (
+          <button
+            type="button"
+            onClick={onBack}
+            className="w-9 h-9 rounded-lg border border-borderColor flex items-center justify-center hover:bg-bgSecondary transition-colors text-textSecondary"
+            title="Go back"
+            aria-label="Go back"
+          >
+            <IconArrowLeft size={16} />
+          </button>
+        )}
+        <div
+          className="flex items-center gap-3.5 cursor-pointer"
+          onClick={() => onTabChange(userRole === 'teacher' ? 'class-progress' : 'dashboard')}
+        >
+          {/* Logo icon only appears when size is 100% (large desktops), hidden on smaller sizes */}
+          <div className="hidden xl:block transition-all duration-300">
+            <LogoMark size={28} />
+          </div>
+          <div className="flex flex-col">
+            <h1 className="font-sans font-bold text-[14px] text-textPrimary tracking-tight leading-none">
+              Far Away
+            </h1>
+            <p className="text-[9px] text-textMuted mt-0.5 font-medium tracking-wider uppercase">
+              Learning Arena
+            </p>
+          </div>
         </div>
       </div>
 
@@ -186,15 +189,30 @@ export default function Header({
             <div className="absolute right-0 top-[calc(100%+10px)] w-[300px] max-w-[calc(100vw-24px)] rounded-lg border border-borderColor bg-bgCard shadow-modal z-[70] p-3 animate-fadeIn">
               <div className="flex items-center justify-between pb-2 border-b border-borderColor">
                 <p className="text-[12px] font-bold text-textPrimary">Notifications</p>
-                <span className="text-[10px] font-semibold text-textMuted uppercase tracking-wide">Today</span>
+                {notifications.length > 0 ? (
+                  <button
+                    type="button"
+                    onClick={onClearNotifications}
+                    className="text-[10px] font-semibold text-accentIndigo hover:underline"
+                  >
+                    Clear
+                  </button>
+                ) : (
+                  <span className="text-[10px] font-semibold text-textMuted uppercase tracking-wide">Today</span>
+                )}
               </div>
               <div className="pt-2 space-y-2">
-                {notifications.map(item => (
-                  <div key={item.title} className="rounded-md bg-bgSecondary/70 border border-borderColor p-3">
+                {notifications.length > 0 ? notifications.map(item => (
+                  <div key={item.id || item.title} className="rounded-md bg-bgSecondary/70 border border-borderColor p-3">
                     <p className="text-[12px] font-semibold text-textPrimary">{item.title}</p>
                     <p className="text-[11px] text-textMuted mt-1 leading-relaxed">{item.body}</p>
                   </div>
-                ))}
+                )) : (
+                  <div className="rounded-md bg-bgSecondary/70 border border-borderColor p-4 text-center">
+                    <p className="text-[12px] font-semibold text-textPrimary">All clear</p>
+                    <p className="text-[11px] text-textMuted mt-1">New SkillSwap and account updates will appear here.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -222,13 +240,21 @@ export default function Header({
           <div
             className="relative"
             onMouseEnter={() => setAccountOpen(true)}
-            onMouseLeave={() => setAccountOpen(false)}
+            onMouseLeave={() => {
+              if (!accountPinned) setAccountOpen(false);
+            }}
           >
             <button
               type="button"
-              onClick={() => setAccountOpen(open => !open)}
+              onClick={() => {
+                setAccountPinned(pinned => {
+                  const next = !pinned;
+                  setAccountOpen(next);
+                  return next;
+                });
+              }}
               className="flex items-center gap-3.5 rounded-lg px-1.5 py-1 hover:bg-bgSecondary transition-colors"
-              aria-expanded={accountOpen}
+              aria-expanded={accountOpen || accountPinned}
               aria-label="Account menu"
             >
               <Avatar initials={user.initials || 'TR'} size="sm" />
@@ -242,7 +268,7 @@ export default function Header({
               </div>
             </button>
 
-            {accountOpen && (
+            {(accountOpen || accountPinned) && (
               <div className="absolute right-0 top-[calc(100%+10px)] w-[280px] max-w-[calc(100vw-24px)] rounded-lg border border-borderColor bg-bgCard shadow-modal z-[70] p-4 animate-fadeIn">
                 <div className="flex items-center gap-3 pb-3 border-b border-borderColor">
                   <Avatar initials={user.initials || 'TR'} size="md" />
@@ -272,7 +298,11 @@ export default function Header({
                 </div>
 
                 <button
-                  onClick={onLogout}
+                  onClick={() => {
+                    setAccountOpen(false);
+                    setAccountPinned(false);
+                    onLogout?.();
+                  }}
                   className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[12px] font-semibold text-accentCrimson hover:bg-accentCrimson/5 transition-all"
                   title="Sign Out"
                 >

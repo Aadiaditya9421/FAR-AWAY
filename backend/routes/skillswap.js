@@ -2,6 +2,8 @@ import { Router } from "express";
 import { body } from "express-validator";
 import {
   acceptRequest,
+  cancelRequest,
+  completeRequest,
   declineRequest,
   getRecommendedPeers,
   getRequests,
@@ -32,5 +34,7 @@ router.post(
 );
 router.put("/accept/:id", mongoIdParam("id"), validateRequest, asyncHandler(acceptRequest));
 router.put("/decline/:id", mongoIdParam("id"), validateRequest, asyncHandler(declineRequest));
+router.put("/cancel/:id", mongoIdParam("id"), validateRequest, asyncHandler(cancelRequest));
+router.put("/complete/:id", mongoIdParam("id"), validateRequest, asyncHandler(completeRequest));
 
 export default router;

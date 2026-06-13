@@ -1,9 +1,11 @@
 // src/features/skillswap/PeerCard.jsx
 import Avatar from '../../components/ui/Avatar';
 import Button from '../../components/ui/Button';
-import { IconCheck, IconArrowsSwap } from '../../components/ui/Icons';
+import { IconCheck, IconArrowsSwap, IconClock } from '../../components/ui/Icons';
 
 export default function PeerCard({ peer, onRequest }) {
+  const isDisabled = peer.matched || peer.requested;
+
   return (
     <div className={`card p-5 transition-all duration-200 ${peer.matched ? 'border-accentEmerald/30 bg-accentEmerald/3' : 'card-interactive'}`}>
       {/* Avatar + Name */}
@@ -23,6 +25,10 @@ export default function PeerCard({ peer, onRequest }) {
               <span className="live-dot" />
               <span className="text-[10px] font-bold text-accentEmerald">Connected</span>
             </div>
+          ) : peer.requested ? (
+            <p className="text-[10px] text-accentAmber mt-0.5">
+              Request pending
+            </p>
           ) : peer.recommended ? (
             <p className="text-[10px] text-accentAmber mt-0.5">
               Recommended for {peer.targetTopic} mastery
@@ -63,15 +69,20 @@ export default function PeerCard({ peer, onRequest }) {
 
       {/* Action */}
       <Button
-        variant={peer.matched ? 'success' : 'primary'}
+        variant={peer.matched ? 'success' : peer.requested ? 'secondary' : 'primary'}
         fullWidth
         onClick={() => onRequest(peer.id)}
-        disabled={peer.matched}
+        disabled={isDisabled}
       >
         {peer.matched ? (
           <span className="flex items-center justify-center gap-1.5">
             <IconCheck size={14} />
             Swap Connected
+          </span>
+        ) : peer.requested ? (
+          <span className="flex items-center justify-center gap-1.5">
+            <IconClock size={14} />
+            Request Sent
           </span>
         ) : (
           <span className="flex items-center justify-center gap-1.5">
