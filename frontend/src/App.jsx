@@ -24,6 +24,7 @@ import LeaderboardView from './features/leaderboard/LeaderboardView';
 import CompetitionsView from './features/competitions/CompetitionsView';
 import SkillSwapView  from './features/skillswap/SkillSwapView';
 import CodingPracticeView from './features/coding/CodingPracticeView';
+import CoinHistoryModal from './features/coins/CoinHistoryModal';
 
 // ── Teacher Views ──
 import ClassProgressView from './features/teacher/ClassProgressView';
@@ -602,6 +603,7 @@ export default function App() {
 
   // When guest tries a gated action
   const [authModal, setAuthModal] = useState({ open: false });
+  const [coinHistoryOpen, setCoinHistoryOpen] = useState(false);
 
   // Whether user chose to browse as guest (hides AuthPage)
   const [guestMode, setGuestMode] = useState(false);
@@ -1377,6 +1379,7 @@ export default function App() {
   // LOGOUT
   // ───────────────────────────────────────────
   const handleLogout = () => {
+    setCoinHistoryOpen(false);
     logout();
     openLandingPage('replace');
   };
@@ -1454,6 +1457,7 @@ export default function App() {
         }}
         onClearNotifications={handleClearNotifications}
         onCoinClick={handleCoinClick}
+        onCoinHistoryClick={() => setCoinHistoryOpen(true)}
         themeMode={themeMode}
         onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
         userRole={user.role}
@@ -1579,6 +1583,12 @@ export default function App() {
         onClose={closeAuthModal}
         onSignIn={goToSignIn}
         onRegister={goToRegister}
+      />
+
+      <CoinHistoryModal
+        isOpen={coinHistoryOpen}
+        onClose={() => setCoinHistoryOpen(false)}
+        currentBalance={user.coins}
       />
     </div>
   );

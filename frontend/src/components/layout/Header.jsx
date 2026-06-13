@@ -43,6 +43,7 @@ export default function Header({
   onNotificationClick,
   onClearNotifications,
   onCoinClick,
+  onCoinHistoryClick,
   themeMode = 'light',
   onToggleTheme,
   userRole = 'student',
@@ -296,6 +297,22 @@ export default function Header({
                     <p className="text-[18px] text-textPrimary font-bold tabular-nums">{user.level || 0}</p>
                   </div>
                 </div>
+
+                {userRole !== 'teacher' && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccountOpen(false);
+                      setAccountPinned(false);
+                      onCoinHistoryClick?.();
+                    }}
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-md text-[12px] font-semibold text-textSecondary hover:text-accentAmber hover:bg-accentAmber/5 transition-all mb-1"
+                    title="View coin balance history"
+                  >
+                    <IconCoin size={14} />
+                    <span>Coin History</span>
+                  </button>
+                )}
 
                 <button
                   onClick={() => {
