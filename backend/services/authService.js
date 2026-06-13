@@ -7,9 +7,11 @@ import { ERROR_CODES } from "../utils/errorCodes.js";
 import { normalizeEmail } from "../utils/helpers.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken } from "../utils/jwtUtils.js";
 import { AppError } from "../utils/responseHandler.js";
+import { creditCoins } from "./coinService.js";
 import { sendEmail } from "./emailService.js";
 
 const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
+const STARTING_COIN_BALANCE = 500;
 
 let googleClient;
 
@@ -96,6 +98,19 @@ async function addRefreshToken(user, refreshToken) {
   });
 }
 
+async function grantStartingCoins(user) {
+  if (STARTING_COIN_BALANCE <= 0) return user;
+
+  await creditCoins(
+    user._id,
+    STARTING_COIN_BALANCE,
+    "Welcome bonus",
+    "manual",
+  );
+
+  return User.findById(user._id);
+}
+
 function hashPasswordResetToken(token) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
@@ -114,7 +129,7 @@ export async function registerUser(payload) {
   }
 
   const hashedPassword = await bcrypt.hash(payload.password, 12);
-  const user = await User.create({
+  let user = await User.create({
     email,
     password: hashedPassword,
     authProvider: "local",
@@ -128,6 +143,7 @@ export async function registerUser(payload) {
     totalCoinsEarned: 0,
     lastDailyBonusClaimedAt: null,
   });
+  user = await grantStartingCoins(user);
 
   const refreshToken = signRefreshToken(user);
   await User.findByIdAndUpdate(user._id, { $set: { refreshTokens: [refreshToken] } });
@@ -160,6 +176,7 @@ export async function loginUser({ email, password }) {
 export async function googleAuthUser({ credential, role = "student" }) {
   const profile = await verifyGoogleCredential(credential);
   let user = await User.findOne({ email: profile.email }).select("+password +refreshTokens");
+  let isNewUser = false;
 
   if (user) {
     if (user.googleId && user.googleId !== profile.googleId) {
@@ -188,6 +205,11 @@ export async function googleAuthUser({ credential, role = "student" }) {
       totalCoinsEarned: 0,
       lastDailyBonusClaimedAt: null,
     });
+    isNewUser = true;
+  }
+
+  if (isNewUser) {
+    user = await grantStartingCoins(user);
   }
 
   const refreshToken = signRefreshToken(user);
