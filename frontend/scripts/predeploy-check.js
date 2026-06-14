@@ -60,6 +60,14 @@ function getApiUrl() {
   return value("VITE_API_URL");
 }
 
+function normalizeApiUrlForChecks(apiUrl) {
+  const trimmed = String(apiUrl || "").trim().replace(/\/+$/, "");
+  if (!trimmed || trimmed.startsWith("/")) return trimmed;
+
+  const withProtocol = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return withProtocol.endsWith("/api") ? withProtocol : `${withProtocol}/api`;
+}
+
 function checkApiUrl() {
   const apiUrl = getApiUrl();
   if (!apiUrl) {
@@ -89,26 +97,26 @@ function checkApiUrl() {
     return;
   }
 
+  const normalizedApiUrl = normalizeApiUrlForChecks(apiUrl);
+
   if (!/^https?:\/\//i.test(apiUrl)) {
-    const message = "VITE_API_URL is missing https://. Use the full Railway API URL including /api.";
-    strict ? addBlocker(message) : addWarn(message);
-    return;
+    addWarn(`VITE_API_URL is missing https:// and will be normalized to ${normalizedApiUrl}.`);
   }
 
-  if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(apiUrl)) {
+  if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(normalizedApiUrl)) {
     const message = "VITE_API_URL points to localhost. Deployed browsers cannot reach your local backend.";
     strict ? addBlocker(message) : addWarn(message);
     return;
   }
 
-  if (!apiUrl.startsWith("https://")) {
+  if (!normalizedApiUrl.startsWith("https://")) {
     const message = "VITE_API_URL is not HTTPS. Use HTTPS for global deployment.";
     strict ? addBlocker(message) : addWarn(message);
   } else {
     addPass("VITE_API_URL is HTTPS.");
   }
 
-  if (!apiUrl.endsWith("/api")) {
+  if (!normalizedApiUrl.endsWith("/api")) {
     const message = "VITE_API_URL must include the /api suffix for this frontend.";
     strict ? addBlocker(message) : addWarn(message);
   }
@@ -117,7 +125,7 @@ function checkApiUrl() {
 async function probeApiHealth() {
   if (!probeApi) return;
 
-  const apiUrl = getApiUrl();
+  const apiUrl = normalizeApiUrlForChecks(getApiUrl());
   if (!apiUrl || hasPlaceholder(apiUrl) || apiUrl.startsWith("/")) return;
 
   const healthUrl = `${apiUrl.replace(/\/+$/, "")}/health`;
