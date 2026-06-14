@@ -1,4 +1,4 @@
-# Far Away - production-like, self-contained stack
+# SkillPath - production-like, self-contained stack
 # One command to run the whole app on a single VPS/box:
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
@@ -48,7 +48,7 @@ services:
       - ./backend/.env
     environment:
       NODE_ENV: production
-      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/far-away}
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/skillpath}
       REDIS_URL: ${REDIS_URL:-redis://redis:6379}
       REDIS_ENABLED: ${REDIS_ENABLED:-true}
       TRUST_PROXY: "1"

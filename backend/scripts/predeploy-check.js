@@ -209,7 +209,7 @@ checkOrigins();
 checkSmtp();
 checkOptionalAiAndOAuth();
 
-console.log("Far Away backend predeploy check");
+console.log("SkillPath backend predeploy check");
 console.log(`Mode: ${strict ? "strict" : "report-only"}`);
 printSection("Passes", passes);
 printSection("Warnings", warnings);

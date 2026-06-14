@@ -28,7 +28,7 @@ export const env = {
   trustProxy:
     process.env.TRUST_PROXY ||
     (process.env.NODE_ENV === "production" ? 1 : false),
-  mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/far-away",
+  mongoUri: process.env.MONGO_URI || "mongodb://localhost:27017/skillpath",
   mongoMaxPoolSize: Number(process.env.MONGO_MAX_POOL_SIZE || 100),
   mongoMinPoolSize: Number(process.env.MONGO_MIN_POOL_SIZE || 10),
   mongoConnectTimeoutMS: Number(process.env.MONGO_CONNECT_TIMEOUT_MS || 10000),
@@ -53,7 +53,7 @@ export const env = {
     port: Number(process.env.SMTP_PORT || 587),
     user: process.env.SMTP_USER || "",
     pass: process.env.SMTP_PASS || "",
-    from: process.env.SMTP_FROM || "Far Away <no-reply@far-away.local>",
+    from: process.env.SMTP_FROM || "SkillPath <no-reply@skillpath.local>",
   },
 };
 

@@ -1,4 +1,4 @@
-name: Far Away CI
+name: SkillPath CI
 
 on:
   push:

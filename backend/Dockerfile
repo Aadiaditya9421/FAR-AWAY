@@ -1,4 +1,4 @@
-# Far Away backend - production image
+# SkillPath backend - production image
 FROM node:20-alpine
 
 ENV NODE_ENV=production

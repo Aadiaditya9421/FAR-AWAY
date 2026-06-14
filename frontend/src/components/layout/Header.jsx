@@ -1,5 +1,5 @@
 // src/components/layout/Header.jsx
-// ─── Far Away — Premium Top Navigation Header ───
+// ─── SkillPath — Premium Top Navigation Header ───
 // Merges all features from Sidebar and TopBar into a unified header.
 // Styled following clean, minimal, Apple/Cal.com design guidelines.
 
@@ -87,7 +87,7 @@ export default function Header({
           </div>
           <div className="flex flex-col">
             <h1 className="font-sans font-bold text-[14px] text-textPrimary tracking-tight leading-none">
-              Far Away
+              SkillPath
             </h1>
             <p className="text-[9px] text-textMuted mt-0.5 font-medium tracking-wider uppercase">
               Learning Arena

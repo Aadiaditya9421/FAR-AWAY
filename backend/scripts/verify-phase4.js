@@ -12,7 +12,7 @@ import { selectQuestionsForAttempt } from "../services/questionSelectionService.
 import { submitAssessment } from "../services/assessmentService.js";
 import { assertSafeDatabaseMutation } from "./databaseSafety.js";
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/far-away";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/skillpath";
 
 function redactConnectionString(uri = "") {
   return uri.replace(/\/\/([^:/@]+):([^@]+)@/, "//$1:****@");
@@ -28,7 +28,7 @@ async function verify() {
   await mongoose.connect(MONGO_URI);
 
   // 1. Retrieve test user and assessment
-  const user = await User.findOne({ email: "student1@faraway.local" });
+  const user = await User.findOne({ email: "student1@skillpath.local" });
   if (!user) {
     throw new Error("Student 1 not found. Please run seed first.");
   }

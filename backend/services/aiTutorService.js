@@ -85,7 +85,7 @@ async function resolveQuestionForHint({ assessmentId, questionId }) {
 
 async function generateGeminiHint({ question, assessment, studentAnswer, hintLevel }) {
   const prompt = `
-You are an AI Tutor on Far Away.
+You are an AI Tutor on SkillPath.
 Create one short hint for a student currently taking a quiz.
 
 Assessment topic: ${assessment.topic}
@@ -384,7 +384,7 @@ function deterministicCodeReview({ problem, language, sourceCode }) {
 
 async function generateGeminiCodeReview({ problem, language, sourceCode }) {
   const prompt = `
-You are an AI coding tutor on Far Away.
+You are an AI coding tutor on SkillPath.
 Review this student's solution for the given programming problem.
 
 Problem title: ${problem.title}

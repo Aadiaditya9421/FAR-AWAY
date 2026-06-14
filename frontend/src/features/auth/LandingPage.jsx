@@ -114,7 +114,7 @@ export default function LandingPage({
           <div className="flex items-center gap-3">
             <LogoMark size={34} />
             <div>
-              <p className="text-sm font-bold leading-none">Far Away</p>
+              <p className="text-sm font-bold leading-none">SkillPath</p>
               <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-white/65">Learning Platform</p>
             </div>
           </div>
@@ -152,7 +152,7 @@ export default function LandingPage({
               Personalized learning, powered by adaptive practice
             </p>
             <h1 className="text-5xl font-bold leading-[1.02] sm:text-6xl lg:text-7xl">
-              Far Away
+              SkillPath
             </h1>
             <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/78 sm:text-xl">
               Adapt to your pace, compete with peers, exchange skills with students, and master topics faster with live insights.
@@ -311,7 +311,7 @@ export default function LandingPage({
       </section>
 
       <footer className="border-t border-borderColor bg-bgCard px-5 py-6 text-center text-xs text-textMuted">
-        Far Away Learning Platform. Student and faculty portal.
+        SkillPath Learning Platform. Student and faculty portal.
       </footer>
     </div>
   );

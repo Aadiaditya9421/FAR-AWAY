@@ -66,8 +66,8 @@ export default function CoinHistoryModal({ isOpen, onClose, currentBalance = 0 }
       }
     };
 
-    window.addEventListener('faraway:data-changed', handleDataChanged);
-    return () => window.removeEventListener('faraway:data-changed', handleDataChanged);
+    window.addEventListener('skillpath:data-changed', handleDataChanged);
+    return () => window.removeEventListener('skillpath:data-changed', handleDataChanged);
   }, [isOpen, loadHistory]);
 
   const totals = useMemo(() => ({

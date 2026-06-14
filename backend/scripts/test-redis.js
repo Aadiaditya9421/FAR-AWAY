@@ -31,7 +31,7 @@ async function runTest() {
   const login = await request("/auth/login", {
     method: "POST",
     body: JSON.stringify({
-      email: "student1@faraway.local",
+      email: "student1@skillpath.local",
       password: process.env.SEED_ADMIN_PASSWORD || "Admin1234",
     }),
   });

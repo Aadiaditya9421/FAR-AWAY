@@ -394,10 +394,10 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
       }
     };
 
-    window.addEventListener('faraway:data-changed', handleDataChanged);
+    window.addEventListener('skillpath:data-changed', handleDataChanged);
     return () => {
       active = false;
-      window.removeEventListener('faraway:data-changed', handleDataChanged);
+      window.removeEventListener('skillpath:data-changed', handleDataChanged);
     };
   }, [isLoggedIn, difficultyFilter]);
 

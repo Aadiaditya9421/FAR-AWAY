@@ -1,4 +1,4 @@
-# FAR AWAY
+# SKILLPATH
 ## Personalized Learning & Skill Competition Platform
 
 | Field | Details |
@@ -68,7 +68,7 @@
 ## Project Folder Structure
 
 ```
-far-away/
+skillpath/
 ├── backend/                        # Express.js Backend
 │   ├── config/
 │   │   ├── database.js             # MongoDB connection

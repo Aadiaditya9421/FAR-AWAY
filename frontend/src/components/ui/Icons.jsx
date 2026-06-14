@@ -1,5 +1,5 @@
 // src/components/ui/Icons.jsx
-// ─── Far Away — SVG Icon Library ───
+// ─── SkillPath — SVG Icon Library ───
 // Pixel-perfect 24×24 icons. All stroke-based, 2px weight, round caps/joins.
 // Usage: <IconBook size={18} className="text-textMuted" />
 
@@ -297,13 +297,16 @@ export const IconFlag = ({ size = 16, className = '' }) => (
   </Ico>
 );
 
-// Far Away logo mark SVG
+// SkillPath logo mark
 export const LogoMark = ({ size = 32, className = '' }) => (
-  <svg width={size} height={size} viewBox="0 0 32 32" fill="none" className={className} aria-label="Far Away">
-    <rect width="32" height="32" rx="8" fill="#fa520f" />
-    <path d="M8 16L16 8L24 16L16 24Z" fill="white" />
-    <path d="M16 8L24 16" stroke="white" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
-  </svg>
+  <img
+    src="/skillpath-mark.png"
+    width={size}
+    height={size}
+    alt="SkillPath logo"
+    className={className}
+    style={{ width: size, height: size, objectFit: 'contain' }}
+  />
 );
 
 // Inline spinner

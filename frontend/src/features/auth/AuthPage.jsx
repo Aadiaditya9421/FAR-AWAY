@@ -1,5 +1,5 @@
 // src/features/auth/AuthPage.jsx
-// ─── Far Away — Login / Register (Cal.com + Mistral light design) ───
+// ─── SkillPath — Login / Register (Cal.com + Mistral light design) ───
 
 import { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
@@ -466,7 +466,7 @@ export default function AuthPage({
       ? 'Choose a strong password for your account'
       : tab === 'login'
         ? 'Sign in to access your assessments and dashboard'
-        : 'Join thousands of students on Far Away';
+        : 'Join thousands of students on SkillPath';
 
   return (
     <div className="min-h-screen bg-bgPrimary flex items-center justify-center relative">
@@ -505,7 +505,7 @@ export default function AuthPage({
           <div className="flex items-center gap-3">
             <LogoMark size={36} />
             <div>
-              <p className="font-sans font-bold text-[16px] text-textPrimary leading-none">Far Away</p>
+              <p className="font-sans font-bold text-[16px] text-textPrimary leading-none">SkillPath</p>
               <p className="text-[11px] text-textMuted font-medium tracking-wide uppercase mt-0.5">Learning Platform</p>
             </div>
           </div>
@@ -537,7 +537,7 @@ export default function AuthPage({
           </div>
 
           <p className="text-[11px] text-textMuted">
-            Far Away Learning Platform · Student Portal
+            SkillPath Learning Platform · Student Portal
           </p>
         </div>
       </div>
@@ -549,7 +549,7 @@ export default function AuthPage({
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
             <LogoMark size={32} />
-            <p className="font-sans font-bold text-[16px] text-textPrimary">Far Away</p>
+            <p className="font-sans font-bold text-[16px] text-textPrimary">SkillPath</p>
           </div>
 
           <div className="mb-6">

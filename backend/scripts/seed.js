@@ -33,7 +33,7 @@ import ClassroomGroup from "../models/ClassroomGroup.js";
 import { assertSafeDatabaseMutation } from "./databaseSafety.js";
 
 // ── Config ────────────────────────────────────────────────────────────────────
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/far-away";
+const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/skillpath";
 const DEFAULT_PASSWORD = process.env.SEED_ADMIN_PASSWORD || "Admin1234";
 
 const hash = (plain) => bcrypt.hashSync(plain, 12);
@@ -58,7 +58,7 @@ function pastDate(days) {
 
 const usersData = [
   {
-    email: "admin@faraway.local",
+    email: "admin@skillpath.local",
     password: hash(DEFAULT_PASSWORD),
     firstName: "Admin",
     lastName: "User",
@@ -70,7 +70,7 @@ const usersData = [
     totalCoinsEarned: 1000,
   },
   {
-    email: "teacher@faraway.local",
+    email: "teacher@skillpath.local",
     password: hash(DEFAULT_PASSWORD),
     firstName: "Jane",
     lastName: "Doe",
@@ -82,7 +82,7 @@ const usersData = [
     totalCoinsEarned: 800,
   },
   {
-    email: "student1@faraway.local",
+    email: "student1@skillpath.local",
     password: hash(DEFAULT_PASSWORD),
     firstName: "Alice",
     lastName: "Johnson",
@@ -94,7 +94,7 @@ const usersData = [
     totalCoinsEarned: 500,
   },
   {
-    email: "student2@faraway.local",
+    email: "student2@skillpath.local",
     password: hash(DEFAULT_PASSWORD),
     firstName: "Bob",
     lastName: "Smith",
@@ -106,7 +106,7 @@ const usersData = [
     totalCoinsEarned: 500,
   },
   {
-    email: "student3@faraway.local",
+    email: "student3@skillpath.local",
     password: hash(DEFAULT_PASSWORD),
     firstName: "Carol",
     lastName: "Williams",

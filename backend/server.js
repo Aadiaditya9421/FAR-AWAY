@@ -30,7 +30,7 @@ async function bootstrap() {
   attachCompetitionSocket(io);
 
   server.listen(env.port, () => {
-    logger.info(`Far Away API listening on port ${env.port} [${env.nodeEnv}]`);
+    logger.info(`SkillPath API listening on port ${env.port} [${env.nodeEnv}]`);
   });
 
   const shutdown = async (signal) => {

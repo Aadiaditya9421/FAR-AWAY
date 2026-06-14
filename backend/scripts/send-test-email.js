@@ -8,9 +8,9 @@ async function test() {
   try {
     const info = await sendEmail({
       to: "adityaaditi9132@gmail.com",
-      subject: "Far Away - SMTP Test Connection Success! 🎉",
-      text: "Hi! This is a test email confirming that your Gmail SMTP credentials are configured correctly for the Far Away learning platform. Great job!",
-      html: "<p>Hi!</p><p>This is a test email confirming that your <strong>Gmail SMTP credentials</strong> are configured correctly for the <strong>Far Away</strong> learning platform. Great job! 🎉</p>",
+      subject: "SkillPath - SMTP Test Connection Success! 🎉",
+      text: "Hi! This is a test email confirming that your Gmail SMTP credentials are configured correctly for the SkillPath learning platform. Great job!",
+      html: "<p>Hi!</p><p>This is a test email confirming that your <strong>Gmail SMTP credentials</strong> are configured correctly for the <strong>SkillPath</strong> learning platform. Great job! 🎉</p>",
     });
     console.log("Email sent successfully! MessageId:", info.messageId);
     process.exit(0);

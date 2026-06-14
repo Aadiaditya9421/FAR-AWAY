@@ -69,7 +69,7 @@ function getFallbackInsights(progressList = []) {
   if (activeProgress.length === 0) {
     return {
       weakAreas: [],
-      reason: "No completed assessment attempts yet, so Far Away is waiting for your first real signal before naming weak areas.",
+      reason: "No completed assessment attempts yet, so SkillPath is waiting for your first real signal before naming weak areas.",
       nextTopics: ["DSA fundamentals", "JavaScript fundamentals", "OOP basics"],
       personalizedRecommendation: "Take one beginner assessment to calibrate your mastery profile and unlock more targeted recommendations.",
       strengths: [],
@@ -259,7 +259,7 @@ export async function analyzeWeaknessesAndRecommend(userId) {
       .join("\n");
 
     const prompt = `
-You are an AI Tutor on Far Away, a gamified learning platform.
+You are an AI Tutor on SkillPath, a gamified learning platform.
 Analyze the student's topic mastery profiles based on Bayesian Knowledge Tracing.
 
 ${scoresSummary || "No assessments completed yet."}
@@ -322,7 +322,7 @@ export async function explainMisconception(submissionId, questionId, requester =
 
   try {
     const prompt = `
-You are an AI Tutor on Far Away, a gamified learning platform.
+You are an AI Tutor on SkillPath, a gamified learning platform.
 Explain the misconception for this quiz answer.
 
 Assessment: "${assessment?.title || "Untitled assessment"}"

@@ -1,4 +1,4 @@
-// src/data/mockData.js — Far Away Platform
+// src/data/mockData.js — SkillPath Platform
 // ─── Updated: Subject-grouped assessments with teacher + time windows ───
 
 export const INITIAL_USER = {

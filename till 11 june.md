@@ -1,4 +1,4 @@
-# FAR AWAY Project Status
+# SKILLPATH Project Status
 
 ## Docker Status
 

@@ -71,7 +71,7 @@ const DEFAULT_PROBLEM_BANK = [
     outputFormat: "Print the vowel count.",
     constraints: ["1 <= length <= 100000"],
     testCases: [
-      { name: "Sample 1", stdin: "Far Away", expectedOutput: "3", isHidden: false },
+      { name: "Sample 1", stdin: "SkillPath", expectedOutput: "3", isHidden: false },
       { name: "Sample 2", stdin: "BCDFG", expectedOutput: "0", isHidden: false },
       { name: "Hidden 1", stdin: "Education", expectedOutput: "5", isHidden: true },
     ],

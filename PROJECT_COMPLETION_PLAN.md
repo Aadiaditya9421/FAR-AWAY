@@ -1,8 +1,8 @@
-# Far Away Completion Plan
+# SkillPath Completion Plan
 
 Date: 2026-06-13
 Source reviewed: `C:\Users\adity\Downloads\implementation_plan 12june`
-Project root: `C:\PERSONAL FILES\FAR-AWAY-my version\FAR-AWAY-local-ready\FAR-AWAY-my version`
+Project root: current local workspace folder.
 
 ## Audit Snapshot
 
@@ -34,7 +34,7 @@ Still manual before a real public launch:
 
 ## System Design Doc Comparison
 
-Source reviewed: `C:\Users\adity\Downloads\Far_Away_System_Design_POC (1).md`
+Source reviewed: `SkillPath_System_Design_POC.md`
 
 Matches:
 - Backend folder structure, route groups, models, validators, middleware, services, sockets, Docker setup, and CI are broadly aligned with the design.
@@ -117,7 +117,7 @@ Verification:
 - `docker compose exec -T backend npm run smoke`
 
 Completed verification:
-- `docker compose config` resolves `MONGO_URI` to `mongodb://mongo:27017/far-away`.
+- `docker compose config` resolves `MONGO_URI` to `mongodb://mongo:27017/skillpath`.
 - Backend health reports MongoDB and Redis as connected.
 - Seed script ran against local Docker MongoDB.
 - Backend smoke test passed against the local seeded database.

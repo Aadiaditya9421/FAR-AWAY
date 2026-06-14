@@ -1,5 +1,5 @@
 // src/lib/apiClient.js
-// Thin fetch wrapper for the Far Away backend API.
+// Thin fetch wrapper for the SkillPath backend API.
 // - Reads the base URL from VITE_API_URL (falls back to local backend).
 // - Stores JWT access/refresh tokens in localStorage.
 // - Transparently refreshes the access token once on a 401, then retries.
@@ -8,8 +8,8 @@ import { normalizeApiBase } from './apiUrl';
 
 const API_BASE = normalizeApiBase(import.meta.env.VITE_API_URL);
 
-const ACCESS_KEY = 'fa_access_token';
-const REFRESH_KEY = 'fa_refresh_token';
+const ACCESS_KEY = 'sp_access_token';
+const REFRESH_KEY = 'sp_refresh_token';
 
 export function getAccessToken() {
   return localStorage.getItem(ACCESS_KEY);
@@ -57,7 +57,7 @@ async function rawRequest(path, { method = 'GET', body, auth = false, token } = 
     });
   } catch (err) {
     throw new ApiError(
-      'Cannot connect to the Far Away server. Check that the backend is online and VITE_API_URL points to the deployed API.',
+      'Cannot connect to the SkillPath server. Check that the backend is online and VITE_API_URL points to the deployed API.',
       {
         status: 0,
         code: 'NETWORK_ERROR',

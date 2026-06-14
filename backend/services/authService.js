@@ -314,15 +314,15 @@ export async function requestPasswordReset({ email }) {
 
     await sendEmail({
       to: user.email,
-      subject: "Reset your Far Away password",
+      subject: "Reset your SkillPath password",
       text: [
-        "Use this link to reset your Far Away password:",
+        "Use this link to reset your SkillPath password:",
         resetUrl,
         "",
         "This link expires in 30 minutes. If you did not request it, you can ignore this email.",
       ].join("\n"),
       html: `
-        <p>Use this link to reset your Far Away password:</p>
+        <p>Use this link to reset your SkillPath password:</p>
         <p><a href="${resetUrl}">Reset password</a></p>
         <p>This link expires in 30 minutes. If you did not request it, you can ignore this email.</p>
       `,

@@ -1,4 +1,4 @@
-# Far Away Global Production Launch
+# SkillPath Global Production Launch
 
 This checklist is for taking the current Docker-ready app to a public domain.
 It does not contain secrets. Put real values only in ignored `.env` files or in

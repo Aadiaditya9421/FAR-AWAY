@@ -1,5 +1,5 @@
 // src/features/auth/AuthModal.jsx
-// ─── Far Away — "Sign in to continue" gating modal ───
+// ─── SkillPath — "Sign in to continue" gating modal ───
 // Shown when a guest tries to use a functional action.
 
 

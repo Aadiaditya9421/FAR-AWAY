@@ -1,7 +1,7 @@
 {
-  "name": "far-away-backend",
+  "name": "skillpath-backend",
   "version": "1.0.0",
-  "description": "Express, MongoDB, Redis backend for the Far Away learning platform POC.",
+  "description": "Express, MongoDB, Redis backend for the SkillPath learning platform POC.",
   "type": "module",
   "main": "server.js",
   "scripts": {

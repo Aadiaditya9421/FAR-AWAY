@@ -1,5 +1,5 @@
 // src/features/skillswap/PostSwapModal.jsx
-// ─── Far Away — Post a Skill Swap Request ───
+// ─── SkillPath — Post a Skill Swap Request ───
 // A focused modal for the user to advertise what they can teach + want to learn.
 
 import { useState } from 'react';

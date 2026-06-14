@@ -1,4 +1,4 @@
-# FAR AWAY
+# SKILLPATH
 
 Personalized learning and skill competition platform POC.
 
@@ -34,9 +34,9 @@ Use `DEPLOYMENT.md` or the production compose file for hosted services.
 
 Seeded accounts all use password `Admin1234`:
 
-- `admin@faraway.local`
-- `teacher@faraway.local`
-- `student1@faraway.local`
+- `admin@skillpath.local`
+- `teacher@skillpath.local`
+- `student1@skillpath.local`
 
 ## Useful Commands
 

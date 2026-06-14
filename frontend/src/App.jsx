@@ -1,5 +1,5 @@
 // src/App.jsx
-// ─── Far Away — Main App Orchestrator ───
+// ─── SkillPath — Main App Orchestrator ───
 // All business logic lives here. Feature views are pure presentational components.
 
 import { useState, useEffect, useRef } from 'react';
@@ -581,7 +581,7 @@ function buildNotification(payload = {}) {
 
 function getInitialThemeMode() {
   if (typeof window === 'undefined') return 'light';
-  const saved = window.localStorage.getItem('far-away-theme');
+  const saved = window.localStorage.getItem('skillpath-theme');
   if (saved === 'light' || saved === 'dark') return saved;
   return 'light';
 }
@@ -658,7 +658,7 @@ export default function App() {
 
   useEffect(() => {
     document.documentElement.dataset.theme = themeMode;
-    window.localStorage.setItem('far-away-theme', themeMode);
+    window.localStorage.setItem('skillpath-theme', themeMode);
   }, [themeMode]);
 
   useEffect(() => {
@@ -870,7 +870,7 @@ export default function App() {
             });
           }
           fetchData({ silent: true });
-          window.dispatchEvent(new CustomEvent('faraway:data-changed', { detail: payload }));
+          window.dispatchEvent(new CustomEvent('skillpath:data-changed', { detail: payload }));
         }, 250);
       };
 

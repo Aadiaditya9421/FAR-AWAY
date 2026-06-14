@@ -1,7 +1,7 @@
-# Far Away — Personalised Learning & Skill Exchange Platform
+# SkillPath — Personalised Learning & Skill Exchange Platform
 ### Frontend client-side SPA (React 19 + Vite + Tailwind CSS v4)
 
-Welcome to the frontend application for **Far Away** — a gamified learning hub built for students and teachers. The client application features a minimal, premium user interface inspired by Cal.com and Mistral AI, prioritizing smooth transitions, micro-interactions, responsive logo visibility, and a complete stroke-based SVG custom icon library.
+Welcome to the frontend application for **SkillPath** — a gamified learning hub built for students and teachers. The client application features a minimal, premium user interface inspired by Cal.com and Mistral AI, prioritizing smooth transitions, micro-interactions, responsive logo visibility, and a complete stroke-based SVG custom icon library.
 
 ---
 
@@ -102,4 +102,4 @@ npm run build
 
 ---
 
-*Far Away Learning Platform · sandesh-frontend branch*
+*SkillPath Learning Platform · sandesh-frontend branch*

@@ -1,4 +1,4 @@
-# Far Away frontend - multi-stage production image (build -> nginx)
+# SkillPath frontend - multi-stage production image (build -> nginx)
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./

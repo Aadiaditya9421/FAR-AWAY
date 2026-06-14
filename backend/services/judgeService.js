@@ -176,7 +176,7 @@ function executeLocalJavaScript({ sourceCode, stdin, timeLimitMs }) {
 
   try {
     const context = vm.createContext(sandbox, {
-      name: "far-away-local-js-runner",
+      name: "skillpath-local-js-runner",
       codeGeneration: { strings: false, wasm: false },
     });
     const script = new vm.Script(sourceCode, { filename: "submission.js" });
@@ -250,7 +250,7 @@ function runProcess(command, args, { stdin = "", cwd, timeoutMs }) {
 }
 
 async function withTempDir(work) {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), `far-away-judge-${crypto.randomUUID()}-`));
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), `skillpath-judge-${crypto.randomUUID()}-`));
   try {
     return await work(dir);
   } finally {

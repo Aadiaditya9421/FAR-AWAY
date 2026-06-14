@@ -1,5 +1,5 @@
 // src/features/teacher/ClassProgressView.jsx
-// ─── Far Away — Teacher Class Progress View ───
+// ─── SkillPath — Teacher Class Progress View ───
 // Enables faculty to inspect students' test submissions, see correct/incorrect answers,
 // and write/generate personalized AI study notes.
 

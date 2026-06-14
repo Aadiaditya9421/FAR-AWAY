@@ -1,4 +1,4 @@
-# Far Away Vercel + Railway Deployment
+# SkillPath Vercel + Railway Deployment
 
 This is the fastest split deployment path:
 
@@ -16,7 +16,7 @@ Create a MongoDB Atlas cluster and database user, then copy the driver URI.
 The URI must include the app database name before the query string:
 
 ```text
-mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/far-away?retryWrites=true&w=majority
+mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/skillpath?retryWrites=true&w=majority
 ```
 
 For a quick launch, allow network access from `0.0.0.0/0`. Lock this down later
@@ -27,7 +27,7 @@ if your hosting provider gives stable outbound IPs.
 In Railway:
 
 1. New Project -> Deploy from GitHub repo.
-2. Select `Aadiaditya9421/FAR-AWAY`.
+2. Select `Aadiaditya9421/SKILLPATH`.
 3. Add Redis:
    - Click `+ New` on the project canvas.
    - Choose Database or Template.
@@ -57,7 +57,7 @@ curl https://your-railway-backend.up.railway.app/api/health
 
 Expected: `success: true`.
 
-If the browser shows `Failed to fetch` or `Cannot connect to the Far Away
+If the browser shows `Failed to fetch` or `Cannot connect to the SkillPath
 server`, first verify that the Railway public domain resolves and the health
 URL above works. A Vercel frontend cannot call a localhost API or a deleted /
 unpublished Railway domain.
@@ -66,7 +66,7 @@ unpublished Railway domain.
 
 In Vercel:
 
-1. Add New Project -> Import `Aadiaditya9421/FAR-AWAY`.
+1. Add New Project -> Import `Aadiaditya9421/SKILLPATH`.
 2. Project Settings:
    - Framework Preset: Vite
    - Root Directory: `frontend`

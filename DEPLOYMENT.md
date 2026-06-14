@@ -1,4 +1,4 @@
-# Far Away Production Deployment Runbook
+# SkillPath Production Deployment Runbook
 
 This runbook targets the fastest reliable deployment path first: one VPS or VM
 running Docker Compose with internal MongoDB, Redis, backend, and nginx-served
@@ -60,7 +60,7 @@ openssl rand -base64 48
 openssl rand -base64 48
 ```
 
-For the self-contained Docker stack, use `mongodb://mongo:27017/far-away` and
+For the self-contained Docker stack, use `mongodb://mongo:27017/skillpath` and
 `redis://redis:6379` in `backend/.env`. Compose also has these defaults, but
 putting them in `backend/.env` lets `npm run predeploy:strict` pass before the
 containers start.

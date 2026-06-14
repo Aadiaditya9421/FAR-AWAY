@@ -52,9 +52,9 @@ app.get("/api/health", (req, res) => {
 
   res.status(healthy ? 200 : 503).json({
     success: healthy,
-    message: healthy ? "Far Away API is healthy" : "Far Away API dependencies are not ready",
+    message: healthy ? "SkillPath API is healthy" : "SkillPath API dependencies are not ready",
     data: {
-      service: "far-away-backend",
+      service: "skillpath-backend",
       environment: env.nodeEnv,
       dependencies: {
         mongodb: mongoConnected ? "connected" : "disconnected",

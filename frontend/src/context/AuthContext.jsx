@@ -1,5 +1,5 @@
 // src/context/AuthContext.jsx
-// ─── Far Away — Auth Context (wired to the live backend API) ───
+// ─── SkillPath — Auth Context (wired to the live backend API) ───
 // Exposes the same interface the app already uses ({ isLoggedIn, authUser, login,
 // register, logout }) but backed by real /api/auth endpoints + JWT storage.
 

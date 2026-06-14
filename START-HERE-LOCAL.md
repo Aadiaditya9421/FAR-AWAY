@@ -1,4 +1,4 @@
-# Far Away — Local Quickstart
+# SkillPath — Local Quickstart
 
 Run the whole app on your machine. Pick one option.
 
@@ -33,7 +33,7 @@ npm run dev               # -> http://localhost:5173
 If you don't have MongoDB locally, use Option A (Docker) instead.
 
 ## Demo accounts (after seeding) — password: `Admin1234`
-`admin@faraway.local` · `teacher@faraway.local` · `student1@faraway.local` · `student2@faraway.local` · `student3@faraway.local`
+`admin@skillpath.local` · `teacher@skillpath.local` · `student1@skillpath.local` · `student2@skillpath.local` · `student3@skillpath.local`
 
 ## Good to know
 - The UI is wired to the backend API for auth, assessments, submissions, teacher
