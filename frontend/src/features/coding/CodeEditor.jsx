@@ -2,7 +2,7 @@ import Editor from '@monaco-editor/react';
 
 export default function CodeEditor({ value, language, onChange }) {
   return (
-    <div className="border border-borderColor rounded-xl overflow-hidden bg-[#111827] min-h-[360px]">
+    <div className="skillpath-code-editor border border-borderColor rounded-xl overflow-hidden bg-[#111827] min-h-[360px]">
       <Editor
         height="360px"
         language={language}
@@ -17,6 +17,10 @@ export default function CodeEditor({ value, language, onChange }) {
           wordWrap: 'on',
           tabSize: 2,
           automaticLayout: true,
+          cursorStyle: 'line',
+          cursorWidth: 2,
+          mouseStyle: 'text',
+          fixedOverflowWidgets: true,
         }}
       />
     </div>

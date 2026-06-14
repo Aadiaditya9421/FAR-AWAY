@@ -10,7 +10,7 @@ import {
   IconLayoutGrid, IconBook, IconTrophy,
   IconZap, IconArrowsSwap, IconSearch, IconBell,
   IconCoin, IconFlame, IconLogOut, IconLogIn, IconPlus, IconUser, IconCode,
-  IconMoon, IconSun, IconArrowLeft,
+  IconMoon, IconSun,
 } from '../ui/Icons';
 
 const STUDENT_NAV = [
@@ -32,8 +32,6 @@ const TEACHER_NAV = [
 export default function Header({
   activeTab,
   onTabChange,
-  canGoBack = false,
-  onBack,
   user,
   isLoggedIn,
   onLogout,
@@ -66,17 +64,6 @@ export default function Header({
     <header className="relative h-[76px] border-b border-borderColor bg-bgCard/90 backdrop-blur-md sticky top-0 z-50 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 transition-all">
       {/* ── Left: Branding ── */}
       <div className="flex items-center gap-2 flex-shrink-0">
-        {canGoBack && (
-          <button
-            type="button"
-            onClick={onBack}
-            className="w-9 h-9 rounded-lg border border-borderColor flex items-center justify-center hover:bg-bgSecondary transition-colors text-textSecondary"
-            title="Go back"
-            aria-label="Go back"
-          >
-            <IconArrowLeft size={16} />
-          </button>
-        )}
         <div
           className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer min-w-0"
           onClick={() => onTabChange(userRole === 'teacher' || userRole === 'admin' ? 'class-progress' : 'dashboard')}

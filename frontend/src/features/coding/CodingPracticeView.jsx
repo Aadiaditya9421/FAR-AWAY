@@ -650,7 +650,9 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
                           type="button"
                           disabled={!enabled}
                           onClick={() => handleLanguageChange(item.id)}
-                          className={`${language === item.id ? 'pill-tab-active' : 'pill-tab-idle'} ${!enabled ? 'opacity-40 cursor-not-allowed' : ''}`}
+                          aria-pressed={language === item.id}
+                          title={enabled ? `Use ${item.label}` : `${item.label} compiler unavailable`}
+                          className={`${language === item.id ? 'pill-tab-active' : 'pill-tab-idle'} ${enabled ? 'cursor-pointer' : 'opacity-40 cursor-not-allowed'}`}
                         >
                           {item.label}
                         </button>

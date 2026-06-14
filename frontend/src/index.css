@@ -243,6 +243,14 @@
   .input:focus { border-color: #fa520f; box-shadow: 0 0 0 3px rgba(250,82,15,0.12); }
   .input:disabled { background: #f5f5f5; cursor: not-allowed; color: #a8a8a8; }
 
+  .skillpath-code-editor,
+  .skillpath-code-editor .monaco-editor,
+  .skillpath-code-editor .monaco-editor .view-lines,
+  .skillpath-code-editor .monaco-editor .view-line,
+  .skillpath-code-editor .monaco-mouse-cursor-text {
+    cursor: text;
+  }
+
   /* ── Navigation ── */
   .nav-item-active {
     @apply nav-item;

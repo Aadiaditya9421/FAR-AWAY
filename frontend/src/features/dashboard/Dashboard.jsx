@@ -1,6 +1,5 @@
 // src/features/dashboard/Dashboard.jsx
 import StatsRow from './StatsRow';
-import SkillsChart from './SkillsChart';
 import SpotlightCard from './SpotlightCard';
 import PeerLearningPanel from './PeerLearningPanel';
 import AIInsightsCard from './AIInsightsCard';
@@ -10,7 +9,6 @@ export default function Dashboard({
   user,
   skillSwap,
   competitions,
-  progress = [],
   insights,
   practiceSet,
   dataLoading = false,
@@ -65,7 +63,6 @@ export default function Dashboard({
             onGoToAssessments={onGoToAssessments}
             onGoToCoding={onGoToCoding}
           />
-          <SkillsChart progress={progress} isPreview={isPreview} />
         </div>
 
         {/* Right (1/3) */}

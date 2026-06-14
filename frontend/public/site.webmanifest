@@ -1,7 +1,7 @@
 {
   "name": "SkillPath",
   "short_name": "SkillPath",
-  "description": "Gamified learning and competitions platform",
+  "description": "Learning platform",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

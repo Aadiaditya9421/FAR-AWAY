@@ -669,7 +669,6 @@ export default function App() {
   // APP STATE (with dynamic subjects and role sync)
   // ───────────────────────────────────────────
   const [activeTab, setActiveTab]                 = useState(() => getInitialAppTab(authUser?.role || 'student'));
-  const [tabBackStack, setTabBackStack]           = useState([]);
   const [searchQuery, setSearchQuery]             = useState('');
   const [notifications, setNotifications]         = useState([]);
   const [hasUnread, setHasUnread]                 = useState(false);
@@ -683,7 +682,6 @@ export default function App() {
   const [classrooms, setClassrooms]               = useState([]);
   const [competitions, setCompetitions]           = useState([]);
   const [skillSwap, setSkillSwap]                 = useState(EMPTY_SKILLSWAP_STATE);
-  const [progress, setProgress]                   = useState([]);
   const [insights, setInsights]                   = useState(null);
   const [practiceSet, setPracticeSet]             = useState(null);
   const [appDataLoading, setAppDataLoading]       = useState(false);
@@ -702,7 +700,6 @@ export default function App() {
       const nextTab = getInitialAppTab(role);
       setActiveTab(nextTab);
       setSearchQuery('');
-      setTabBackStack(prev => prev.slice(0, -1));
     };
 
     window.addEventListener('popstate', handlePopState);
@@ -730,12 +727,10 @@ export default function App() {
       }));
       const nextTab = getInitialAppTab(authUser.role || 'student');
       setActiveTab(nextTab);
-      setTabBackStack([]);
       writeAppTabUrl(nextTab, 'replace');
     } else if (!isLoggedIn) {
       setUser(INITIAL_USER);
       setActiveTab('dashboard');
-      setTabBackStack([]);
     }
   }, [isLoggedIn, authUser, initializing]);
 
@@ -754,7 +749,6 @@ export default function App() {
       setClassrooms([]);
       setCompetitions([]);
       setSkillSwap(EMPTY_SKILLSWAP_STATE);
-      setProgress([]);
       setInsights(null);
       setPracticeSet(null);
       setAppDataLoading(true);
@@ -788,7 +782,6 @@ export default function App() {
             setClassrooms(classroomsData);
             setCompetitions([]);
             setSkillSwap(EMPTY_SKILLSWAP_STATE);
-            setProgress([]);
             setInsights(null);
             setPracticeSet(null);
             setAppDataError('');
@@ -803,7 +796,6 @@ export default function App() {
               SkillSwapService.recommended().catch(() => []),
             ]),
             Promise.allSettled([
-              AnalyticsService.progress(),
               AnalyticsService.insights(),
               AnalyticsService.practiceSet(),
             ]),
@@ -816,15 +808,12 @@ export default function App() {
             recommendedPeersData,
           ] = coreData;
 
-          const [progressResult, insightsResult, practiceSetResult] = analyticsData;
+          const [insightsResult, practiceSetResult] = analyticsData;
           const analyticsFailed = analyticsData.some(result => result.status === 'rejected');
 
           setSubjects(groupAssessmentsIntoSubjects(assessmentsData));
           setCompetitions(mapCompetitions(competitionsData, authUserId));
           setSkillSwap(mapSkillSwap(skillSwapData, authUserId, recommendedPeersData));
-          if (progressResult.status === 'fulfilled' && progressResult.value?.progress) {
-            setProgress(progressResult.value.progress);
-          }
           if (insightsResult.status === 'fulfilled') {
             setInsights(insightsResult.value);
           }
@@ -848,7 +837,6 @@ export default function App() {
           setSkillSwap(EMPTY_SKILLSWAP_STATE);
           setSubmissions([]);
           setClassrooms([]);
-          setProgress([]);
           setInsights(null);
           setPracticeSet(null);
           setAppDataError(err.message || 'Unable to load live data from server.');
@@ -973,23 +961,9 @@ export default function App() {
       setSearchQuery('');
       return;
     }
-
-    if (!options.replace) {
-      setTabBackStack(prev => [...prev, activeTab].slice(-10));
-    }
-
     setActiveTab(normalizedTab);
     setSearchQuery('');
     writeAppTabUrl(normalizedTab, options.replace ? 'replace' : 'push');
-  };
-
-  const handleAppBack = () => {
-    if (tabBackStack.length > 0) {
-      window.history.back();
-      return;
-    }
-
-    handleTabChange(getDefaultTabForRole(user.role), { replace: true });
   };
 
   const handleClearNotifications = () => {
@@ -1120,14 +1094,10 @@ export default function App() {
       await refreshUser();
 
       try {
-        const [progressData, insightsData, practiceSetData] = await Promise.all([
-          AnalyticsService.progress().catch(() => null),
+        const [insightsData, practiceSetData] = await Promise.all([
           AnalyticsService.insights().catch(() => null),
           AnalyticsService.practiceSet().catch(() => null),
         ]);
-        if (progressData && progressData.progress) {
-          setProgress(progressData.progress);
-        }
         if (insightsData) {
           setInsights(insightsData);
         }
@@ -1501,7 +1471,6 @@ export default function App() {
       <AuthPage
         onGuestBrowse={() => setGuestMode(true)}
         initialTab={authView}
-        onBackToLanding={() => openLandingPage()}
         themeMode={themeMode}
         onToggleTheme={() => setThemeMode(mode => mode === 'dark' ? 'light' : 'dark')}
       />
@@ -1518,8 +1487,6 @@ export default function App() {
       <Header
         activeTab={activeTab}
         onTabChange={handleTabChange}
-        canGoBack={tabBackStack.length > 0}
-        onBack={handleAppBack}
         user={user}
         isLoggedIn={isLoggedIn}
         onLogout={handleLogout}
@@ -1550,7 +1517,6 @@ export default function App() {
               assessments={dashboardAssessments}
               skillSwap={skillSwap}
               competitions={competitions}
-              progress={progress}
               insights={insights}
               practiceSet={practiceSet}
               dataLoading={appDataLoading}
