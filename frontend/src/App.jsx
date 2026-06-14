@@ -649,6 +649,9 @@ export default function App() {
   const [showLanding, setShowLanding] = useState(initialAuthScreen.showLanding);
   const [themeMode, setThemeMode] = useState(getInitialThemeMode);
 
+  // Whether to show landing page or auth form when not logged in
+  const [showLanding, setShowLanding] = useState(true);
+
   // When guest tries a gated action
   const [authModal, setAuthModal] = useState({ open: false });
   const [coinHistoryOpen, setCoinHistoryOpen] = useState(false);
