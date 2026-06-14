@@ -78,14 +78,13 @@ export default function Header({
           </button>
         )}
         <div
-          className="flex items-center gap-3.5 cursor-pointer"
+          className="flex items-center gap-2.5 sm:gap-3.5 cursor-pointer min-w-0"
           onClick={() => onTabChange(userRole === 'teacher' || userRole === 'admin' ? 'class-progress' : 'dashboard')}
         >
-          {/* Logo icon only appears when size is 100% (large desktops), hidden on smaller sizes */}
-          <div className="hidden xl:block transition-all duration-300">
+          <div className="flex flex-shrink-0 items-center transition-all duration-300">
             <LogoMark size={28} />
           </div>
-          <div className="flex flex-col">
+          <div className="flex min-w-0 flex-col">
             <h1 className="font-sans font-bold text-[14px] text-textPrimary tracking-tight leading-none">
               SkillPath
             </h1>
