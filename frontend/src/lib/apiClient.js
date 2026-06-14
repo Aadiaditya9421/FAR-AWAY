@@ -1,6 +1,6 @@
 // src/lib/apiClient.js
 // Thin fetch wrapper for the SkillPath backend API.
-// - Reads the base URL from VITE_API_URL (falls back to local backend).
+// - Reads the base URL from VITE_API_URL.
 // - Stores JWT access/refresh tokens in localStorage.
 // - Transparently refreshes the access token once on a 401, then retries.
 
@@ -49,15 +49,16 @@ async function rawRequest(path, { method = 'GET', body, auth = false, token } = 
   if (access) headers.Authorization = `Bearer ${access}`;
 
   let res;
+  const url = `${API_BASE}${path}`;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
+    res = await fetch(url, {
       method,
       headers,
       body: body != null ? JSON.stringify(body) : undefined,
     });
   } catch (err) {
     throw new ApiError(
-      'Cannot connect to the SkillPath server. Check that the backend is online and VITE_API_URL points to the deployed API.',
+      `Cannot connect to the SkillPath server. Current API base is ${API_BASE}. For deployed frontend builds, set VITE_API_URL to the backend URL ending in /api and redeploy.`,
       {
         status: 0,
         code: 'NETWORK_ERROR',
@@ -67,6 +68,7 @@ async function rawRequest(path, { method = 'GET', body, auth = false, token } = 
   }
 
   let json = null;
+  const contentType = res.headers.get('content-type') || '';
   try {
     json = await res.json();
   } catch {
@@ -74,6 +76,16 @@ async function rawRequest(path, { method = 'GET', body, auth = false, token } = 
   }
 
   if (!res.ok) throw buildError(res.status, json);
+  if (!json && contentType.includes('text/html')) {
+    throw new ApiError(
+      'SkillPath API returned the frontend page instead of JSON. Set VITE_API_URL to the deployed backend API URL ending in /api, or configure a real /api proxy.',
+      {
+        status: res.status,
+        code: 'INVALID_API_RESPONSE',
+        details: [`Received ${contentType} from ${url}`],
+      },
+    );
+  }
   return json && json.data !== undefined ? json.data : json;
 }
 

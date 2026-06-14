@@ -5,6 +5,7 @@ const args = new Set(process.argv.slice(2));
 const strict = args.has("--strict") || process.env.PREDEPLOY_STRICT === "true";
 const requireGoogle = args.has("--require-google") || process.env.REQUIRE_GOOGLE_AUTH === "true";
 const probeApi = args.has("--probe-api") || process.env.PREDEPLOY_PROBE_API === "true";
+const isVercel = process.env.VERCEL === "1";
 const root = process.cwd();
 
 const blockers = [];
@@ -72,6 +73,12 @@ function checkApiUrl() {
   }
 
   if (apiUrl === "/api") {
+    if (isVercel && process.env.SKILLPATH_ALLOW_VERCEL_API_PROXY !== "true") {
+      const message =
+        "VITE_API_URL=/api only works on Vercel when a real /api proxy is configured. For Vercel + Railway, set VITE_API_URL to the Railway backend URL ending in /api.";
+      strict ? addBlocker(message) : addWarn(message);
+      return;
+    }
     addPass("VITE_API_URL uses same-origin /api proxy.");
     return;
   }
@@ -84,6 +91,12 @@ function checkApiUrl() {
 
   if (!/^https?:\/\//i.test(apiUrl)) {
     const message = "VITE_API_URL is missing https://. Use the full Railway API URL including /api.";
+    strict ? addBlocker(message) : addWarn(message);
+    return;
+  }
+
+  if (/^https?:\/\/(localhost|127\.0\.0\.1|\[::1\])(?::|\/|$)/i.test(apiUrl)) {
+    const message = "VITE_API_URL points to localhost. Deployed browsers cannot reach your local backend.";
     strict ? addBlocker(message) : addWarn(message);
     return;
   }

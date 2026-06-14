@@ -8,6 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "predeploy:check": "node scripts/predeploy-check.js",
+    "predeploy:env": "node scripts/predeploy-check.js --strict",
     "predeploy:strict": "node scripts/predeploy-check.js --strict --require-google",
     "preview": "vite preview"
   },

@@ -1,8 +1,8 @@
 import { io } from 'socket.io-client';
 import { getAccessToken } from './apiClient';
-import { getSocketHost } from './apiUrl';
+import { getSocketHost, normalizeApiBase } from './apiUrl';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+const API_URL = normalizeApiBase(import.meta.env.VITE_API_URL);
 const SOCKET_HOST = getSocketHost(API_URL);
 
 let rootSocket = null;
