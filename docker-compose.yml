@@ -47,6 +47,7 @@ services:
       MONGO_URI: mongodb://mongo:27017/skillpath
       REDIS_ENABLED: "true"
       REDIS_URL: redis://redis:6379
+      LOCAL_COMPILER_ENABLED: "false"
     volumes:
       - ./backend:/app
       - backend-node-modules:/app/node_modules

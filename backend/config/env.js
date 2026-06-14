@@ -42,7 +42,7 @@ export const env = {
   refreshTokenTtl: process.env.REFRESH_TOKEN_TTL || "7d",
   judge0Url: process.env.JUDGE0_URL || "",
   judge0ApiKey: process.env.JUDGE0_API_KEY || "",
-  localCompilerEnabled: (process.env.LOCAL_COMPILER_ENABLED || "true") !== "false",
+  localCompilerEnabled: process.env.LOCAL_COMPILER_ENABLED === "true",
   pistonUrl: process.env.PISTON_URL || "",
   pistonEnabled: (process.env.PISTON_ENABLED || "false") === "true",
   googleClientId: process.env.GOOGLE_CLIENT_ID || "",

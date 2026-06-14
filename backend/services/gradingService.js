@@ -13,7 +13,7 @@ function enabledLanguages() {
   return env.judge0Url || env.localCompilerEnabled || (env.pistonEnabled && env.pistonUrl) ? JUDGE0_LANGUAGES : BASE_LANGUAGES;
 }
 
-function compilerProvider() {
+function executionProvider() {
   if (env.judge0Url) return "judge0";
   if (env.localCompilerEnabled) return "local-compiler";
   if (env.pistonEnabled && env.pistonUrl) return "piston";
@@ -160,7 +160,8 @@ function publicProblem(problem) {
     runtimeLanguages,
     supportedLanguages,
     starterCode,
-    compilerProvider: compilerProvider(),
+    executionProvider: executionProvider(),
+    compilerProvider: executionProvider(),
     totalTestCases: raw.testCases.length,
     testCases: raw.testCases
       .filter((testCase) => !testCase.isHidden)
@@ -234,7 +235,7 @@ export async function gradeProblem({ problemId, userId, language, sourceCode, mo
     throw new AppError(`Unsupported language for this problem: ${language}`, 400, ERROR_CODES.BAD_REQUEST);
   }
   if (!runtimeLanguages.includes(normalizedLanguage)) {
-    throw new AppError(`Compiler for ${language} is not configured`, 503, ERROR_CODES.INTERNAL_ERROR);
+    throw new AppError(`Execution runtime for ${language} is not configured`, 503, ERROR_CODES.INTERNAL_ERROR);
   }
 
   const revealHidden = mode === "run";

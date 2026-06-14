@@ -101,7 +101,7 @@ async function getPistonRuntime(language) {
   });
 
   if (!runtime) {
-    throw new AppError(`Piston compiler is unavailable for ${language}`, 503, ERROR_CODES.INTERNAL_ERROR);
+    throw new AppError(`Piston runtime is unavailable for ${language}`, 503, ERROR_CODES.INTERNAL_ERROR);
   }
 
   return runtime;
@@ -261,7 +261,7 @@ async function withTempDir(work) {
 function localCompilerMissing(language, err) {
   if (err?.code !== "ENOENT") return err;
   return new AppError(
-    `Compiler for ${language} is not installed on the server image`,
+    `Execution runtime for ${language} is not installed on the server worker`,
     503,
     ERROR_CODES.INTERNAL_ERROR,
   );
@@ -361,7 +361,7 @@ async function executeWithLocalCompiler(payload) {
   if (language === "python") return executeLocalPython(payload);
   if (language === "cpp") return executeLocalCpp(payload);
   if (language === "java") return executeLocalJava(payload);
-  throw new AppError(`Local compiler does not support ${language}`, 400, ERROR_CODES.BAD_REQUEST);
+  throw new AppError(`Server execution runtime does not support ${language}`, 400, ERROR_CODES.BAD_REQUEST);
 }
 
 export async function executeCode(payload) {
@@ -384,7 +384,7 @@ export async function executeCode(payload) {
   }
 
   throw new AppError(
-    "Only JavaScript is available without a Judge0 provider configured",
+    "Only JavaScript is available without a Judge0, Piston, or local execution runtime configured",
     503,
     ERROR_CODES.INTERNAL_ERROR,
   );

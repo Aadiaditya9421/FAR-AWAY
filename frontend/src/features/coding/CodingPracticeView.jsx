@@ -39,11 +39,15 @@ function languageLabel(id) {
   return LANGUAGE_OPTIONS.find(item => item.id === id)?.label || id;
 }
 
-function compilerLabel(provider) {
-  if (provider === 'judge0') return 'Judge0';
-  if (provider === 'piston') return 'Piston';
-  if (provider === 'local-compiler') return 'Inbuilt';
-  return 'Local JS';
+function executionProviderLabel(provider) {
+  if (provider === 'judge0') return 'Judge0 execution service';
+  if (provider === 'piston') return 'Piston execution service';
+  if (provider === 'local-compiler') return 'Server sandbox';
+  return 'Backend JS sandbox';
+}
+
+function executionProvider(problem) {
+  return problem?.executionProvider || problem?.compilerProvider || 'local-js';
 }
 
 function getStarterCode(problem, language) {
@@ -511,7 +515,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <Badge variant="live">{activeProblem?.compilerProvider === 'local-js' ? 'Local JS compiler' : `${compilerLabel(activeProblem?.compilerProvider)} compiler`}</Badge>
+          <Badge variant="live">{executionProviderLabel(executionProvider(activeProblem))}</Badge>
           {canManageProblems && <CreateProblemPanel onCreated={loadProblems} />}
         </div>
       </div>
@@ -526,7 +530,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
           {[
             { label: 'Problems', value: problems.length },
-            { label: 'Runtime', value: compilerLabel(activeProblem?.compilerProvider) },
+            { label: 'Execution', value: executionProviderLabel(executionProvider(activeProblem)) },
             { label: 'Visible Cases', value: visibleTestCount },
             { label: 'Hidden Cases', value: hiddenTestCount },
           ].map(item => (
@@ -587,7 +591,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
                       <span className="text-[10px] text-textMuted">{problem.tags?.slice(0, 2).join(', ')}</span>
                     </div>
                     <p className="mt-2 text-[10px] text-textMuted">
-                      {(getEnabledLanguages(problem).map(languageLabel).join(', ')) || 'No compiler'}
+                      {(getEnabledLanguages(problem).map(languageLabel).join(', ')) || 'No runtime'}
                     </p>
                   </button>
                 );
@@ -640,7 +644,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
                 )}
 
                 <div>
-                  <span className="label-caps">Compiler Language</span>
+                  <span className="label-caps">Runtime Language</span>
                   <div className="mt-2 flex flex-wrap gap-2">
                     {LANGUAGE_OPTIONS.map(item => {
                       const enabled = enabledLanguages.includes(item.id);
@@ -651,7 +655,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
                           disabled={!enabled}
                           onClick={() => handleLanguageChange(item.id)}
                           aria-pressed={language === item.id}
-                          title={enabled ? `Use ${item.label}` : `${item.label} compiler unavailable`}
+                          title={enabled ? `Use ${item.label}` : `${item.label} runtime unavailable`}
                           className={`${language === item.id ? 'pill-tab-active' : 'pill-tab-idle'} ${enabled ? 'cursor-pointer' : 'opacity-40 cursor-not-allowed'}`}
                         >
                           {item.label}
@@ -664,7 +668,7 @@ export default function CodingPracticeView({ isLoggedIn, onRequireAuth, userRole
 
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <p className="text-xs text-textMuted">
-                  {languageLabel(language)} - {activeProblem.compilerProvider === 'local-js' ? 'local sandbox' : `${compilerLabel(activeProblem.compilerProvider)} online judge`}
+                  {languageLabel(language)} - {executionProviderLabel(executionProvider(activeProblem))}
                 </p>
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <Button
